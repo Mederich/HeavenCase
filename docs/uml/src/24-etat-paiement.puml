@@ -1,0 +1,19 @@
+@startuml
+!include _theme.puml
+title Paiement — confirmation serveur unique
+caption UC07 · HENC-20 · R8 | MVP
+[*] --> EnAttente : pack choisi / paiement cree
+state "En attente" as EnAttente
+state "Confirme" as Confirme
+state "Echoue" as Echoue
+EnAttente --> EnAttente : retour navigateur / lire statut connu\nnotification invalide / refuser sans credit
+EnAttente --> Confirme : notification valide de succes\n/ 1 credit + 1 mouvement + statut dans une transaction
+EnAttente --> Echoue : echec confirme / aucun credit
+Confirme --> Confirme : notification repetee / restituer sans credit
+Echoue --> Echoue : notification identique / aucun effet
+note right of Confirme
+  {unique referencePrestataire}
+  D5 : annulations, remboursements et notifications
+  contradictoires tardives a definir avant exploitation.
+end note
+@enduml

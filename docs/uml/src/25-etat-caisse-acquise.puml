@@ -1,0 +1,19 @@
+@startuml
+!include _theme.puml
+title CaisseAcquise — consommation unique [H1]
+caption UC08/09 · R7/R10 | MVP
+[*] --> Disponible : achat atomique valide
+state "Disponible" as Disponible
+state "Reservee pour ouverture" as Reservee
+state "Consommee" as Consommee
+Disponible --> Reservee : demander ouverture [proprietaire autorise]\n/ proteger la caisse
+Reservee --> Reservee : requete concurrente / indiquer traitement
+Reservee --> Disponible : echec avant validation / annuler les effets
+Reservee --> Consommee : ouverture validee\n/ resultat + preuve + possession coherents
+Consommee --> Consommee : redemander / retourner le resultat existant
+note right of Consommee
+  H1/D1 : debit effectue a l'achat uniquement.
+  Au plus une ouverture reussie par caisse acquise.
+  Reservee est un etat logique ; stockage/verrou a choisir.
+end note
+@enduml

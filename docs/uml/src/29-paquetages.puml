@@ -1,0 +1,45 @@
+@startuml
+!include _theme.puml
+title Paquetages — responsabilites et dependances
+caption Cadrage §10 · UC01–UC14 | Architecture cible
+left to right direction
+package "Interface / API" as API
+package "Identites et acces" as AUTH
+package "Catalogue" as CAT
+package "Portefeuille et paiements" as MONEY
+package "Achats et ouvertures" as OPEN
+package "Inventaire et revente" as INV
+package "Statistiques" as STATS
+package "Progression et badges" as GAME
+package "Administration" as ADMIN
+package "Adaptateurs externes" as EXT
+package "Persistance" as DB
+API ..> AUTH : identite et autorisations
+API ..> CAT
+API ..> MONEY
+API ..> OPEN
+API ..> INV
+API ..> STATS
+API ..> GAME
+API ..> ADMIN
+OPEN ..> CAT : configuration de tirage
+OPEN ..> MONEY : achat H1
+OPEN ..> INV : attribution
+STATS ..> OPEN : lecture des ouvertures validees
+GAME ..> OPEN : actions validees si eligibles D4
+GAME ..> AUTH : compte / profil
+INV ..> MONEY : credit de revente
+ADMIN ..> CAT : configuration autorisee
+AUTH ..> EXT : SSO / emails
+MONEY ..> EXT : prestataire paiement
+AUTH ..> DB
+MONEY ..> DB
+OPEN ..> DB
+INV ..> DB
+GAME ..> DB
+note bottom of API
+  Decoupage logique cible ; pas des microservices deployes.
+  Les modules metier ne sont pas tous presents dans le code.
+  Contrats d'evenements / transactions a preciser (D4/D6).
+end note
+@enduml

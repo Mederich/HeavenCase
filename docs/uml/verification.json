@@ -1,0 +1,236 @@
+{
+  "diagrams": 32,
+  "syntax": "passed with PlantUML --check-syntax",
+  "svg_xml": "32 valid documents",
+  "png_files": "32 decoded successfully",
+  "render_engine": "Smetana (local)",
+  "plantuml_version": "1.2026.9",
+  "java_version": "21.0.13+9.0.LTS",
+  "images": [
+    {
+      "slug": "01-cas-utilisation",
+      "width": 1646,
+      "height": 2830,
+      "png_bytes": 394758,
+      "svg_bytes": 23567
+    },
+    {
+      "slug": "02-classes-compte",
+      "width": 2764,
+      "height": 1278,
+      "png_bytes": 288397,
+      "svg_bytes": 20568
+    },
+    {
+      "slug": "03-classes-economie",
+      "width": 3368,
+      "height": 1688,
+      "png_bytes": 516824,
+      "svg_bytes": 42893
+    },
+    {
+      "slug": "04-classes-progression",
+      "width": 2959,
+      "height": 1017,
+      "png_bytes": 272882,
+      "svg_bytes": 26238
+    },
+    {
+      "slug": "05-activite-inscription",
+      "width": 1174,
+      "height": 1667,
+      "png_bytes": 101221,
+      "svg_bytes": 19841
+    },
+    {
+      "slug": "06-activite-depot",
+      "width": 1832,
+      "height": 1657,
+      "png_bytes": 191427,
+      "svg_bytes": 18091
+    },
+    {
+      "slug": "07-activite-achat",
+      "width": 1412,
+      "height": 1389,
+      "png_bytes": 145658,
+      "svg_bytes": 15053
+    },
+    {
+      "slug": "08-activite-ouverture",
+      "width": 1381,
+      "height": 1515,
+      "png_bytes": 165836,
+      "svg_bytes": 14838
+    },
+    {
+      "slug": "09-activite-revente",
+      "width": 1029,
+      "height": 1475,
+      "png_bytes": 84355,
+      "svg_bytes": 15551
+    },
+    {
+      "slug": "10-activite-statistiques",
+      "width": 2626,
+      "height": 934,
+      "png_bytes": 170811,
+      "svg_bytes": 17419
+    },
+    {
+      "slug": "11-activite-recuperation",
+      "width": 1731,
+      "height": 1296,
+      "png_bytes": 94343,
+      "svg_bytes": 13981
+    },
+    {
+      "slug": "12-activite-administration",
+      "width": 1463,
+      "height": 1097,
+      "png_bytes": 128214,
+      "svg_bytes": 11271
+    },
+    {
+      "slug": "13-sequence-inscription",
+      "width": 1850,
+      "height": 2251,
+      "png_bytes": 247068,
+      "svg_bytes": 39732
+    },
+    {
+      "slug": "14-sequence-depot",
+      "width": 1546,
+      "height": 2403,
+      "png_bytes": 252059,
+      "svg_bytes": 40341
+    },
+    {
+      "slug": "15-sequence-achat",
+      "width": 1449,
+      "height": 1908,
+      "png_bytes": 205567,
+      "svg_bytes": 32515
+    },
+    {
+      "slug": "16-sequence-ouverture",
+      "width": 1741,
+      "height": 2376,
+      "png_bytes": 269895,
+      "svg_bytes": 44857
+    },
+    {
+      "slug": "17-sequence-revente",
+      "width": 1552,
+      "height": 1578,
+      "png_bytes": 106593,
+      "svg_bytes": 29725
+    },
+    {
+      "slug": "18-sequence-statistiques",
+      "width": 1864,
+      "height": 2071,
+      "png_bytes": 156905,
+      "svg_bytes": 41102
+    },
+    {
+      "slug": "19-sequence-recuperation",
+      "width": 1782,
+      "height": 1784,
+      "png_bytes": 126951,
+      "svg_bytes": 35063
+    },
+    {
+      "slug": "20-sequence-administration",
+      "width": 1867,
+      "height": 1356,
+      "png_bytes": 99835,
+      "svg_bytes": 23397
+    },
+    {
+      "slug": "21-etat-compte",
+      "width": 1431,
+      "height": 715,
+      "png_bytes": 104466,
+      "svg_bytes": 12772
+    },
+    {
+      "slug": "22-etat-session",
+      "width": 1321,
+      "height": 746,
+      "png_bytes": 88153,
+      "svg_bytes": 10696
+    },
+    {
+      "slug": "23-etat-recuperation",
+      "width": 1137,
+      "height": 807,
+      "png_bytes": 100384,
+      "svg_bytes": 12361
+    },
+    {
+      "slug": "24-etat-paiement",
+      "width": 1913,
+      "height": 684,
+      "png_bytes": 113877,
+      "svg_bytes": 15572
+    },
+    {
+      "slug": "25-etat-caisse-acquise",
+      "width": 1540,
+      "height": 912,
+      "png_bytes": 118360,
+      "svg_bytes": 13592
+    },
+    {
+      "slug": "26-etat-ouverture",
+      "width": 1610,
+      "height": 807,
+      "png_bytes": 110035,
+      "svg_bytes": 12021
+    },
+    {
+      "slug": "27-etat-possession",
+      "width": 1277,
+      "height": 696,
+      "png_bytes": 85904,
+      "svg_bytes": 10470
+    },
+    {
+      "slug": "28-etat-badge",
+      "width": 1507,
+      "height": 696,
+      "png_bytes": 91557,
+      "svg_bytes": 10214
+    },
+    {
+      "slug": "29-paquetages",
+      "width": 3759,
+      "height": 1444,
+      "png_bytes": 272522,
+      "svg_bytes": 29676
+    },
+    {
+      "slug": "30-composants",
+      "width": 4385,
+      "height": 1776,
+      "png_bytes": 307660,
+      "svg_bytes": 29690
+    },
+    {
+      "slug": "31-deploiement",
+      "width": 4134,
+      "height": 1536,
+      "png_bytes": 340953,
+      "svg_bytes": 35059
+    },
+    {
+      "slug": "32-objets-exemple",
+      "width": 2532,
+      "height": 977,
+      "png_bytes": 126213,
+      "svg_bytes": 14503
+    }
+  ],
+  "source_snapshot_sha256": "ca22bc79c53b01a81e504437f0072f2187df835c03130701ce3a238b7c2c03c7"
+}

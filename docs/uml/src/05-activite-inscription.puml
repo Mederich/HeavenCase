@@ -1,0 +1,39 @@
+@startuml
+!include _theme.puml
+title S1 — Inscription et activation
+caption UC02/03 · HENC-30, 35, 36 | MVP / R2 selon UC
+start
+:Choisir email/mot de passe ou SSO;
+if (Mode SSO ?) then (oui)
+  :Rediriger vers le fournisseur;
+  :Verifier le retour cote serveur;
+else (local)
+  :Valider email, mot de passe et unicite;
+endif
+if (Identite valide ?) then (oui)
+  :Creer ou retrouver le compte;
+else (non)
+  :Afficher erreur generique / annulation;
+  stop
+endif
+if (Compte deja actif ?) then (oui)
+  :Ouvrir session avec acces autorise;
+  stop
+else (non)
+  :Reprendre l'inscription incomplete;
+endif
+:Renseigner la date de naissance;
+if (Date valide et age declare >= 18 ?) then (oui)
+  :Presenter les CGU versionnees;
+else (non)
+  :Refuser l'activation et expliquer l'erreur;
+  stop
+endif
+if (Acceptation explicite enregistree ?) then (oui)
+  :Activer le compte;
+  :Autoriser les fonctionnalites reservees;
+else (non)
+  :Conserver compte incomplet et permettre reprise;
+endif
+stop
+@enduml

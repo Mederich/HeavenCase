@@ -1,0 +1,33 @@
+@startuml
+!include _theme.puml
+title S6 — Statistiques et progression
+caption UC12/13 · HENC-49 a 52 · R12/R13 | MVP / R2 selon UC
+start
+if (Lecture du tableau de bord ?) then (oui)
+  :Verifier le compte et choisir la periode;
+  :Agreger les ouvertures reussies du compte;
+  if (Donnees disponibles ?) then (oui)
+    :Afficher nombre et repartition observee;
+  else (non)
+    :Afficher l'etat sans donnees;
+  endif
+  :Lire niveau, progression et badges obtenus;
+else (action metier)
+  :Recevoir une action metier deja validee;
+  if (Regles configurees et action eligible ?) then (oui)
+    if (Action deja comptabilisee ?) then (oui)
+      :Conserver la progression existante;
+    else (non)
+      :Enregistrer evenement unique\net mettre a jour la progression;
+      :En R2 : attribuer les badges satisfaits une seule fois;
+    endif
+  else (non)
+    :Ne pas attribuer de progression arbitraire;
+  endif
+endif
+stop
+note right
+  Bareme, seuils, actions et badges a valider (D4).
+  Lire ou rafraichir un ecran ne genere pas de points.
+end note
+@enduml

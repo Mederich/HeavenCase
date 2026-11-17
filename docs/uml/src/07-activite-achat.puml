@@ -1,0 +1,32 @@
+@startuml
+!include _theme.puml
+title S3 — Achat d’une caisse [H1]
+caption UC08 · HENC-12 · R6/R7 | MVP / R2 selon UC
+start
+:Demander achat avec identifiant d'operation;
+:Verifier compte actif;
+if (Operation deja validee ?) then (oui)
+  :Restituer l'achat existant;
+  stop
+endif
+:Debuter transaction et proteger le portefeuille;
+if (Caisse disponible et solde suffisant ?) then (oui)
+  :Debiter une seule fois;
+  :Creer AchatCaisse et CaisseAcquise disponible;
+  :Creer mouvement de debit lie a l'achat;
+else (non)
+  :Annuler transaction;
+  :Expliquer indisponibilite / solde insuffisant;
+  stop
+endif
+if (Validation atomique reussie ?) then (oui)
+  :Retourner la caisse acquise et le nouveau solde;
+else (non)
+  :Annuler : aucun debit ni caisse isolee;
+endif
+stop
+note right
+  H1 / D1 : l'achat precede l'ouverture.
+  Le schema SQL actuel doit etre reconcilie avec HENC-12.
+end note
+@enduml

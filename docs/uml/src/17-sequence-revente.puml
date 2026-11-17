@@ -1,0 +1,31 @@
+@startuml
+!include _theme.puml
+title S5 — Revente et protection contre le double credit
+caption UC11 · HENC-16 · R11 | Release 2
+autonumber
+actor Joueur as J
+boundary "Interface web" as UI
+control "API / Inventaire" as API
+database "Persistance" as DB
+J -> UI : choisir un objet a revendre
+UI --> J : valeur proposee + confirmation
+J -> UI : confirmer
+UI -> API : possessionId + cleOperation
+API -> API : verifier compte / proprietaire
+API -> DB : rechercher revente deja validee
+alt Operation deja validee
+  DB --> API : revente existante
+  API --> UI : meme resultat sans nouveau credit
+else Nouvelle operation
+  API -> DB : BEGIN ; proteger possession + portefeuille
+  alt Possession disponible
+    API -> DB : creer Revente + marquer vendue\n+ credit portefeuille + mouvement lie
+    API -> DB : COMMIT ou ROLLBACK atomique
+    API --> UI : resultat confirme ou echec sans effets partiels
+  else Possession deja vendue / indisponible
+    API -> DB : ROLLBACK
+    API --> UI : refuser une seconde vente
+  end
+end
+UI --> J : inventaire et solde coherents
+@enduml

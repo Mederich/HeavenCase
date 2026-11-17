@@ -1,0 +1,67 @@
+@startuml
+!include _theme.puml
+title Classes — statistiques, progression et badges
+caption UC12–UC13 · HENC-49 a HENC-52 · R12–R13 | MVP / R2
+left to right direction
+class Compte {
+  id : UUID
+}
+class Ouverture {
+  statut : EnCoursReussieEchouee
+  date : Instant
+  rareteObtenue : Rarete
+}
+class VueStatistiques <<derivee>> {
+  nombreOuverturesTerminees : Entier
+  repartitionRaretes : Agregats
+}
+class Periode {
+  debut : Instant [0..1]
+  fin : Instant
+}
+class Progression {
+  points : Entier
+  niveau : Entier
+  prochainSeuil : Entier
+}
+class EvenementProgression {
+  actionId : Identifiant
+  nature : TypeAction
+  pointsAttribues : Entier
+  date : Instant
+}
+class Badge <<R2>> {
+  id : UUID
+  libelle : Texte
+  condition : RegleVersionnee
+}
+class AttributionBadge <<R2>> {
+  attribueLe : Instant
+}
+Compte "1" -- "0..*" Ouverture
+Compte "1" -- "1" Progression
+Compte "1" -- "0..*" EvenementProgression
+Progression ..> EvenementProgression : calcule selon regles D4
+VueStatistiques ..> Ouverture : lit les reussites
+VueStatistiques --> "1" Periode : est calculee sur
+VueStatistiques --> "1" Compte : concerne
+Compte "1" -- "0..*" AttributionBadge
+Badge "1" -- "0..*" AttributionBadge
+AttributionBadge ..> EvenementProgression : conditions / regles D4
+note bottom of VueStatistiques
+  Vue calculee, pas une source de verite financiere.
+  Repartition observee != probabilites theoriques.
+  Comptes sans donnees et periodes vides geres.
+  HENC-50 (R2) depend de HENC-49 (MVP).
+end note
+note bottom of EvenementProgression
+  {unique compte, actionId}
+  Le rafraichissement d'une page ne donne pas de points.
+  D4 : actions eligibles, bareme, seuils et periodes a valider.
+end note
+note bottom of AttributionBadge
+  {unique compte, badge}
+  L'absence d'attribution signifie non obtenu.
+  HENC-52 (R2) depend de HENC-51 (MVP).
+end note
+@enduml

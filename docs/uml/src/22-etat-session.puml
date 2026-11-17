@@ -1,0 +1,19 @@
+@startuml
+!include _theme.puml
+title Session — validite, expiration et revocation
+caption UC02/04 · R4/R5 | MVP
+[*] --> Valide : authentification reussie
+state "Valide" as Valide
+state "Expiree" as Expiree
+state "Revoquee" as Revoquee
+Valide --> Valide : requete [non expiree / droits de compte suffisants]
+Valide --> Expiree : delai atteint
+Valide --> Revoquee : deconnexion, revocation explicite\nou mot de passe reinitialise
+Expiree --> [*]
+Revoquee --> [*]
+note right of Valide
+  Compte incomplet : acces limite a la finalisation.
+  Reconnexion : creation d'une nouvelle session,
+  pas reactivation d'une session expiree / revoquee.
+end note
+@enduml

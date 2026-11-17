@@ -1,0 +1,32 @@
+@startuml
+!include _theme.puml
+title S4 — Ouverture et attribution [H1]
+caption UC09/10 · HENC-7, 24, 48 · R9/R10 | MVP / R2 selon UC
+start
+:Demander ouverture d'une CaisseAcquise;
+:Verifier compte actif et proprietaire;
+:Proteger la caisse contre des ouvertures concurrentes;
+if (Resultat reussi deja enregistre ?) then (oui)
+  :Restituer ce resultat sans nouveau tirage;
+  stop
+endif
+if (Caisse disponible ?) then (oui)
+  :Utiliser la configuration de tirage retenue D1/D3;
+else (non)
+  :Afficher indisponibilite / traitement en cours;
+  stop
+endif
+:Realiser le tirage cote serveur;
+:Transaction : enregistrer ouverture et preuve,\ncreer la possession et consommer la caisse;
+if (Validation atomique reussie ?) then (oui)
+  :Afficher / animer le resultat persiste;
+else (non)
+  :Annuler les effets et rendre la caisse disponible;
+endif
+stop
+note right
+  Aucun debit a l'ouverture sous H1.
+  Une coupure apres validation restitue le meme resultat.
+  L'animation ne determine jamais le tirage.
+end note
+@enduml

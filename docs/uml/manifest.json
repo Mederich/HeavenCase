@@ -1,0 +1,496 @@
+{
+  "version": "1.0",
+  "date": "2026-10-27",
+  "project": "Heaven Case",
+  "baseline_commit": "c5d145b",
+  "cadrage_url": "https://linear.app/lemedpo/document/heaven-case-cadrage-du-projet-et-base-uml-fe7df30e3e1e",
+  "hypotheses": [
+    "H1/D1 : achat prealable et caisse acquise",
+    "D2 : identites et fournisseurs SSO",
+    "D3 : methode de preuve et configuration de tirage",
+    "D4 : bareme, seuils et badges",
+    "D5 : prestataire / mode et conversion de paiement",
+    "D6 : socle observe React/Rust/PostgreSQL ; exploitation cible a preciser",
+    "D7 : droits admin et securite du compte"
+  ],
+  "diagrams": [
+    {
+      "slug": "01-cas-utilisation",
+      "title": "Cas d’utilisation — frontiere et acteurs",
+      "kind": "usecase",
+      "group": "Fonctions",
+      "refs": "UC01–UC14 · HENC-7 a HENC-53",
+      "decisions": [
+        "D2",
+        "D5",
+        "D7"
+      ],
+      "scope": "MVP / R2",
+      "source": "src/01-cas-utilisation.puml",
+      "svg": "svg/01-cas-utilisation.svg",
+      "png": "png/01-cas-utilisation.png"
+    },
+    {
+      "slug": "02-classes-compte",
+      "title": "Classes — compte, identite et consentement",
+      "kind": "class",
+      "group": "Classes et objets",
+      "refs": "UC02–UC05 · R1–R5",
+      "decisions": [
+        "D2",
+        "D7"
+      ],
+      "scope": "MVP / R2",
+      "source": "src/02-classes-compte.puml",
+      "svg": "svg/02-classes-compte.svg",
+      "png": "png/02-classes-compte.png"
+    },
+    {
+      "slug": "03-classes-economie",
+      "title": "Classes — portefeuille, achat, ouverture et inventaire",
+      "kind": "class",
+      "group": "Classes et objets",
+      "refs": "UC06–UC11 · R6–R11, R14",
+      "decisions": [
+        "D1",
+        "D3",
+        "D5"
+      ],
+      "scope": "MVP / R2",
+      "source": "src/03-classes-economie.puml",
+      "svg": "svg/03-classes-economie.svg",
+      "png": "png/03-classes-economie.png"
+    },
+    {
+      "slug": "04-classes-progression",
+      "title": "Classes — statistiques, progression et badges",
+      "kind": "class",
+      "group": "Classes et objets",
+      "refs": "UC12–UC13 · HENC-49 a HENC-52 · R12–R13",
+      "decisions": [
+        "D4"
+      ],
+      "scope": "MVP / R2",
+      "source": "src/04-classes-progression.puml",
+      "svg": "svg/04-classes-progression.svg",
+      "png": "png/04-classes-progression.png"
+    },
+    {
+      "slug": "05-activite-inscription",
+      "title": "S1 — Inscription et activation",
+      "kind": "activity",
+      "group": "Activites",
+      "refs": "UC02/03 · HENC-30, 35, 36",
+      "decisions": [
+        "D2"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/05-activite-inscription.puml",
+      "svg": "svg/05-activite-inscription.svg",
+      "png": "png/05-activite-inscription.png"
+    },
+    {
+      "slug": "06-activite-depot",
+      "title": "S2 — Depot par carte et confirmation serveur",
+      "kind": "activity",
+      "group": "Activites",
+      "refs": "UC07 · HENC-20 · R6/R8",
+      "decisions": [
+        "D5"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/06-activite-depot.puml",
+      "svg": "svg/06-activite-depot.svg",
+      "png": "png/06-activite-depot.png"
+    },
+    {
+      "slug": "07-activite-achat",
+      "title": "S3 — Achat d’une caisse [H1]",
+      "kind": "activity",
+      "group": "Activites",
+      "refs": "UC08 · HENC-12 · R6/R7",
+      "decisions": [
+        "D1"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/07-activite-achat.puml",
+      "svg": "svg/07-activite-achat.svg",
+      "png": "png/07-activite-achat.png"
+    },
+    {
+      "slug": "08-activite-ouverture",
+      "title": "S4 — Ouverture et attribution [H1]",
+      "kind": "activity",
+      "group": "Activites",
+      "refs": "UC09/10 · HENC-7, 24, 48 · R9/R10",
+      "decisions": [
+        "D1",
+        "D3"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/08-activite-ouverture.puml",
+      "svg": "svg/08-activite-ouverture.svg",
+      "png": "png/08-activite-ouverture.png"
+    },
+    {
+      "slug": "09-activite-revente",
+      "title": "S5 — Revente d’un objet",
+      "kind": "activity",
+      "group": "Activites",
+      "refs": "UC11 · HENC-16 · R11",
+      "decisions": [
+        "D5"
+      ],
+      "scope": "Release 2",
+      "source": "src/09-activite-revente.puml",
+      "svg": "svg/09-activite-revente.svg",
+      "png": "png/09-activite-revente.png"
+    },
+    {
+      "slug": "10-activite-statistiques",
+      "title": "S6 — Statistiques et progression",
+      "kind": "activity",
+      "group": "Activites",
+      "refs": "UC12/13 · HENC-49 a 52 · R12/R13",
+      "decisions": [
+        "D4"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/10-activite-statistiques.puml",
+      "svg": "svg/10-activite-statistiques.svg",
+      "png": "png/10-activite-statistiques.png"
+    },
+    {
+      "slug": "11-activite-recuperation",
+      "title": "S7 — Recuperation du mot de passe",
+      "kind": "activity",
+      "group": "Activites",
+      "refs": "UC04 · HENC-32 · R4/R5",
+      "decisions": [
+        "D2",
+        "D7"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/11-activite-recuperation.puml",
+      "svg": "svg/11-activite-recuperation.svg",
+      "png": "png/11-activite-recuperation.png"
+    },
+    {
+      "slug": "12-activite-administration",
+      "title": "S8 — Administration du catalogue",
+      "kind": "activity",
+      "group": "Activites",
+      "refs": "UC14 · HENC-17 · R9/R14",
+      "decisions": [
+        "D1",
+        "D3",
+        "D7"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/12-activite-administration.puml",
+      "svg": "svg/12-activite-administration.svg",
+      "png": "png/12-activite-administration.png"
+    },
+    {
+      "slug": "13-sequence-inscription",
+      "title": "S1 — Identite, age et CGU",
+      "kind": "sequence",
+      "group": "Sequences",
+      "refs": "UC02/03 · R1–R5",
+      "decisions": [
+        "D2"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/13-sequence-inscription.puml",
+      "svg": "svg/13-sequence-inscription.svg",
+      "png": "png/13-sequence-inscription.png"
+    },
+    {
+      "slug": "14-sequence-depot",
+      "title": "S2 — Depot et notification idempotente",
+      "kind": "sequence",
+      "group": "Sequences",
+      "refs": "UC07 · HENC-20 · R6/R8",
+      "decisions": [
+        "D5"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/14-sequence-depot.puml",
+      "svg": "svg/14-sequence-depot.svg",
+      "png": "png/14-sequence-depot.png"
+    },
+    {
+      "slug": "15-sequence-achat",
+      "title": "S3 — Achat atomique [H1]",
+      "kind": "sequence",
+      "group": "Sequences",
+      "refs": "UC08 · HENC-12 · R6/R7",
+      "decisions": [
+        "D1"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/15-sequence-achat.puml",
+      "svg": "svg/15-sequence-achat.svg",
+      "png": "png/15-sequence-achat.png"
+    },
+    {
+      "slug": "16-sequence-ouverture",
+      "title": "S4 — Resultat autoritaire et attribution [H1]",
+      "kind": "sequence",
+      "group": "Sequences",
+      "refs": "UC09/10 · HENC-7, 24 · R9/R10",
+      "decisions": [
+        "D1",
+        "D3"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/16-sequence-ouverture.puml",
+      "svg": "svg/16-sequence-ouverture.svg",
+      "png": "png/16-sequence-ouverture.png"
+    },
+    {
+      "slug": "17-sequence-revente",
+      "title": "S5 — Revente et protection contre le double credit",
+      "kind": "sequence",
+      "group": "Sequences",
+      "refs": "UC11 · HENC-16 · R11",
+      "decisions": [
+        "D5"
+      ],
+      "scope": "Release 2",
+      "source": "src/17-sequence-revente.puml",
+      "svg": "svg/17-sequence-revente.svg",
+      "png": "png/17-sequence-revente.png"
+    },
+    {
+      "slug": "18-sequence-statistiques",
+      "title": "S6 — Lectures statistiques et evenement de progression",
+      "kind": "sequence",
+      "group": "Sequences",
+      "refs": "UC12/13 · HENC-49 a 52 · R12/R13",
+      "decisions": [
+        "D4"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/18-sequence-statistiques.puml",
+      "svg": "svg/18-sequence-statistiques.svg",
+      "png": "png/18-sequence-statistiques.png"
+    },
+    {
+      "slug": "19-sequence-recuperation",
+      "title": "S7 — Jeton unique et revocation des sessions",
+      "kind": "sequence",
+      "group": "Sequences",
+      "refs": "UC04 · HENC-32 · R4/R5",
+      "decisions": [
+        "D2",
+        "D7"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/19-sequence-recuperation.puml",
+      "svg": "svg/19-sequence-recuperation.svg",
+      "png": "png/19-sequence-recuperation.png"
+    },
+    {
+      "slug": "20-sequence-administration",
+      "title": "S8 — Publication d’une configuration de caisse",
+      "kind": "sequence",
+      "group": "Sequences",
+      "refs": "UC14 · HENC-17 · R9/R14",
+      "decisions": [
+        "D1",
+        "D3",
+        "D7"
+      ],
+      "scope": "MVP / R2 selon UC",
+      "source": "src/20-sequence-administration.puml",
+      "svg": "svg/20-sequence-administration.svg",
+      "png": "png/20-sequence-administration.png"
+    },
+    {
+      "slug": "21-etat-compte",
+      "title": "Compte — activation et inscription incomplete",
+      "kind": "state",
+      "group": "Etats",
+      "refs": "UC02/03 · R1/R2",
+      "decisions": [
+        "D2",
+        "D7"
+      ],
+      "scope": "MVP",
+      "source": "src/21-etat-compte.puml",
+      "svg": "svg/21-etat-compte.svg",
+      "png": "png/21-etat-compte.png"
+    },
+    {
+      "slug": "22-etat-session",
+      "title": "Session — validite, expiration et revocation",
+      "kind": "state",
+      "group": "Etats",
+      "refs": "UC02/04 · R4/R5",
+      "decisions": [
+        "D7"
+      ],
+      "scope": "MVP",
+      "source": "src/22-etat-session.puml",
+      "svg": "svg/22-etat-session.svg",
+      "png": "png/22-etat-session.png"
+    },
+    {
+      "slug": "23-etat-recuperation",
+      "title": "Demande de reinitialisation — usage unique",
+      "kind": "state",
+      "group": "Etats",
+      "refs": "UC04 · HENC-32 · R4",
+      "decisions": [
+        "D7"
+      ],
+      "scope": "MVP",
+      "source": "src/23-etat-recuperation.puml",
+      "svg": "svg/23-etat-recuperation.svg",
+      "png": "png/23-etat-recuperation.png"
+    },
+    {
+      "slug": "24-etat-paiement",
+      "title": "Paiement — confirmation serveur unique",
+      "kind": "state",
+      "group": "Etats",
+      "refs": "UC07 · HENC-20 · R8",
+      "decisions": [
+        "D5"
+      ],
+      "scope": "MVP",
+      "source": "src/24-etat-paiement.puml",
+      "svg": "svg/24-etat-paiement.svg",
+      "png": "png/24-etat-paiement.png"
+    },
+    {
+      "slug": "25-etat-caisse-acquise",
+      "title": "CaisseAcquise — consommation unique [H1]",
+      "kind": "state",
+      "group": "Etats",
+      "refs": "UC08/09 · R7/R10",
+      "decisions": [
+        "D1",
+        "D3"
+      ],
+      "scope": "MVP",
+      "source": "src/25-etat-caisse-acquise.puml",
+      "svg": "svg/25-etat-caisse-acquise.svg",
+      "png": "png/25-etat-caisse-acquise.png"
+    },
+    {
+      "slug": "26-etat-ouverture",
+      "title": "Ouverture — tentative et resultat immuable",
+      "kind": "state",
+      "group": "Etats",
+      "refs": "UC09/10 · R9/R10/R14",
+      "decisions": [
+        "D1",
+        "D3"
+      ],
+      "scope": "MVP",
+      "source": "src/26-etat-ouverture.puml",
+      "svg": "svg/26-etat-ouverture.svg",
+      "png": "png/26-etat-ouverture.png"
+    },
+    {
+      "slug": "27-etat-possession",
+      "title": "PossessionObjet — disponibilite et revente",
+      "kind": "state",
+      "group": "Etats",
+      "refs": "UC10/11 · HENC-15/16 · R11",
+      "decisions": [
+        "D5"
+      ],
+      "scope": "Release 2",
+      "source": "src/27-etat-possession.puml",
+      "svg": "svg/27-etat-possession.svg",
+      "png": "png/27-etat-possession.png"
+    },
+    {
+      "slug": "28-etat-badge",
+      "title": "Badge pour un compte — attribution unique",
+      "kind": "state",
+      "group": "Etats",
+      "refs": "UC13 · HENC-52 · R13",
+      "decisions": [
+        "D4"
+      ],
+      "scope": "Release 2",
+      "source": "src/28-etat-badge.puml",
+      "svg": "svg/28-etat-badge.svg",
+      "png": "png/28-etat-badge.png"
+    },
+    {
+      "slug": "29-paquetages",
+      "title": "Paquetages — responsabilites et dependances",
+      "kind": "package",
+      "group": "Architecture",
+      "refs": "Cadrage §10 · UC01–UC14",
+      "decisions": [
+        "D4",
+        "D6",
+        "D7"
+      ],
+      "scope": "Architecture cible",
+      "source": "src/29-paquetages.puml",
+      "svg": "svg/29-paquetages.svg",
+      "png": "png/29-paquetages.png"
+    },
+    {
+      "slug": "30-composants",
+      "title": "Composants — socle observe et cible fonctionnelle",
+      "kind": "component",
+      "group": "Architecture",
+      "refs": "Depot c5d145b · cadrage §10",
+      "decisions": [
+        "D2",
+        "D5",
+        "D6",
+        "D7"
+      ],
+      "scope": "Observe + cible clairement distingues",
+      "source": "src/30-composants.puml",
+      "svg": "svg/30-composants.svg",
+      "png": "png/30-composants.png"
+    },
+    {
+      "slug": "31-deploiement",
+      "title": "Deploiement — cible validation / production",
+      "kind": "deployment",
+      "group": "Architecture",
+      "refs": "Dockerfiles, compose et cadrage §10",
+      "decisions": [
+        "D2",
+        "D5",
+        "D6"
+      ],
+      "scope": "Architecture cible ancree dans le depot",
+      "source": "src/31-deploiement.puml",
+      "svg": "svg/31-deploiement.svg",
+      "png": "png/31-deploiement.png"
+    },
+    {
+      "slug": "32-objets-exemple",
+      "title": "Objets — exemple apres achat puis ouverture [H1]",
+      "kind": "object",
+      "group": "Classes et objets",
+      "refs": "UC08/09/10 · R6–R10 · exemple fictif",
+      "decisions": [
+        "D1",
+        "D3",
+        "D5"
+      ],
+      "scope": "Exemple illustratif, pas donnees reelles",
+      "source": "src/32-objets-exemple.puml",
+      "svg": "svg/32-objets-exemple.svg",
+      "png": "png/32-objets-exemple.png"
+    }
+  ],
+  "source_sha256": "ca22bc79c53b01a81e504437f0072f2187df835c03130701ce3a238b7c2c03c7",
+  "tool_versions": {
+    "plantuml_version": "1.2026.9",
+    "java_version": "21.0.13+9.0.LTS"
+  }
+}

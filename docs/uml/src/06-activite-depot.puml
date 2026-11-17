@@ -1,0 +1,36 @@
+@startuml
+!include _theme.puml
+title S2 — Depot par carte et confirmation serveur
+caption UC07 · HENC-20 · R6/R8 | MVP / R2 selon UC
+start
+:Verifier session et compte actif;
+:Choisir un pack et creer un paiement en attente;
+:Demarrer le parcours du prestataire;
+:Afficher le statut connu au retour navigateur;
+note right
+  Le retour navigateur ne credite jamais le portefeuille.
+  La notification peut arriver avant ou apres ce retour.
+end note
+:Recevoir la notification serveur du prestataire;
+if (Notification authentifiee et coherente ?) then (oui)
+  :Retrouver le paiement par reference unique;
+else (non)
+  :Refuser la notification, conserver le statut;
+  stop
+endif
+if (Paiement deja traite ?) then (oui)
+  :Retourner le resultat deja enregistre sans credit;
+  stop
+endif
+if (Paiement confirme ?) then (oui)
+  :Transaction atomique : confirmer paiement,\ncrediter portefeuille, creer mouvement unique;
+  if (Validation atomique reussie ?) then (oui)
+    :Afficher le solde actualise;
+  else (non)
+    :Annuler les effets et permettre le retraitement;
+  endif
+else (echec)
+  :Enregistrer l'echec et informer sans credit;
+endif
+stop
+@enduml

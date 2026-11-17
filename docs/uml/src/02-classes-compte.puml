@@ -1,0 +1,67 @@
+@startuml
+!include _theme.puml
+title Classes — compte, identite et consentement
+caption UC02–UC05 · R1–R5 | MVP / R2
+left to right direction
+class Compte {
+  id : UUID
+  pseudo : Texte
+  contact : Texte [0..1]
+  statut : StatutCompte
+  role : Role
+  eligibilite : ResultatAge
+  +peutAccederAuxFonctionsReservees() : Booleen
+}
+class IdentiteAuthentification {
+  id : UUID
+  mode : LocalOuSSO
+  emailLocal : Texte [0..1]
+  hashMotDePasse : Texte [0..1]
+  fournisseur : Texte [0..1]
+  sujetExterne : Texte [0..1]
+}
+class Session {
+  id : IdentifiantOpaque
+  expireLe : Instant
+  statut : ValideExpireeRevoquee
+  +revoquer()
+}
+class DemandeReinitialisation {
+  id : UUID
+  empreinteJeton : Texte
+  expireLe : Instant
+  utiliseeLe : Instant [0..1]
+  +consommerUneFois()
+}
+class VersionCGU {
+  version : Texte
+  contenu : Texte
+  publieeLe : Instant
+}
+class AcceptationCGU {
+  accepteeLe : Instant
+}
+Compte "1" -- "1" IdentiteAuthentification : utilise [H/D2]
+Compte "1" -- "0..*" Session : ouvre
+IdentiteAuthentification "1" -- "0..*" DemandeReinitialisation : locale seulement
+Compte "1" -- "0..*" AcceptationCGU : consent
+VersionCGU "1" -- "0..*" AcceptationCGU : version visee
+note bottom of IdentiteAuthentification
+  [H] 1 identite par compte au MVP ; liaison multiple a valider (D2).
+  Local : email unique + hash requis.
+  SSO : couple fournisseur/sujet unique.
+  Aucun rattachement sur le seul email externe.
+end note
+note bottom of AcceptationCGU
+  {unique compte, versionCGU}
+  Activation si identite valide, age >= 18 declare
+  et acceptation de la version requise persistee.
+  Une session peut exister avec acces restreint
+  pendant une inscription incomplete.
+end note
+note bottom of DemandeReinitialisation
+  R4 : jeton valide, limite dans le temps, usage unique.
+  Changer le mot de passe revoque les sessions existantes.
+  Aucun mot de passe local ajoute a un compte exclusivement SSO.
+end note
+@enduml

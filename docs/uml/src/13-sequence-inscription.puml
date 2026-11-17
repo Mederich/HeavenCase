@@ -1,0 +1,46 @@
+@startuml
+!include _theme.puml
+title S1 — Identite, age et CGU
+caption UC02/03 · R1–R5 | MVP / R2 selon UC
+autonumber
+actor Utilisateur as U
+boundary "Interface web" as UI
+control "API / Acces" as API
+participant "Fournisseur SSO" as SSO
+database "Persistance" as DB
+U -> UI : choisir email ou SSO
+alt Identite locale
+  UI -> API : email + mot de passe
+  API -> DB : verifier unicite / hash ou retrouver identite
+else SSO
+  UI -> SSO : redirection
+  SSO --> UI : retour d'authentification
+  UI -> API : retour SSO
+  API -> SSO : verifier la reponse selon protocole retenu
+  API -> DB : retrouver / creer par fournisseur + sujet
+end
+alt Identite invalide / retour annule
+  API --> UI : erreur generique ; aucun acces complet
+else Identite valide
+  API -> DB : lire statut du compte
+  alt Compte deja actif
+    API --> UI : session et espace utilisateur
+  else Inscription incomplete
+    API --> UI : session / contexte a acces restreint
+    U -> UI : date de naissance et accord CGU
+    UI -> API : finaliser inscription
+    API -> API : verifier age declare >= 18 et accord explicite
+    alt Conditions valides
+      API -> DB : persister eligibilite + acceptation version/date + activation
+      DB --> API : validation
+      API --> UI : compte actif
+    else Condition refusee / echec de persistance
+      API --> UI : compte reste incomplet ; reprise possible
+    end
+  end
+end
+note over API,SSO
+  D2 : fournisseurs / protocole precis a confirmer.
+  Ne jamais lier deux comptes sur le seul email externe.
+end note
+@enduml

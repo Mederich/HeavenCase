@@ -1,0 +1,46 @@
+@startuml
+!include _theme.puml
+title S4 — Resultat autoritaire et attribution [H1]
+caption UC09/10 · HENC-7, 24 · R9/R10 | MVP / R2 selon UC
+autonumber
+actor Joueur as J
+boundary "Interface web" as UI
+control "API / Ouvertures" as API
+control "MoteurTirage" as RNG
+database "Persistance" as DB
+J -> UI : ouvrir une caisse acquise
+UI -> API : caisseAcquiseId + cleOperation
+API -> API : verifier compte actif / proprietaire
+API -> DB : BEGIN ; proteger la caisse et lire dernier resultat
+alt Ouverture deja reussie
+  DB --> API : resultat et preuve existants
+  API -> DB : terminer transaction de lecture
+  API --> UI : restituer le meme resultat
+else Caisse indisponible / reservee
+  API -> DB : ROLLBACK
+  API --> UI : statut / erreur sans nouveau tirage
+else Caisse disponible
+  API -> DB : lire la configuration retenue / version D1-D3
+  API -> RNG : tirer selon ponderations cote serveur
+  RNG --> API : objet obtenu + donnees de preuve
+  API -> DB : enregistrer Ouverture + PreuveTirage\n+ PossessionObjet + caisse consommee
+  API -> DB : tenter COMMIT
+  DB --> API : resultat de validation
+  alt Validation reussie
+    API --> UI : resultat persiste et preuve consultable
+    UI --> J : animer le resultat puis acces inventaire
+  else Echec avant validation
+    API -> DB : ROLLBACK si transaction encore ouverte
+    API --> UI : aucun gain / consommation isolee
+  end
+end
+opt Connexion coupee apres succes
+  UI -> API : redemander le resultat de la meme caisse
+  API -> DB : lire ouverture reussie
+  API --> UI : meme resultat, sans re-tirage ni debit
+end
+note over API,RNG
+  H1 : aucun debit a l'ouverture.
+  D3 : methode de preuve et revelations a confirmer.
+end note
+@enduml

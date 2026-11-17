@@ -1,0 +1,27 @@
+@startuml
+!include _theme.puml
+title S8 — Administration du catalogue
+caption UC14 · HENC-17 · R9/R14 | MVP / R2 selon UC
+start
+:S'authentifier et demander l'administration;
+if (Droits admin suffisants ?) then (oui)
+  :Creer ou modifier caisse, objet, prix ou composition;
+else (non)
+  :Refuser l'acces cote serveur;
+  stop
+endif
+:Valider donnees et ponderations;
+if (Donnees coherentes ?) then (oui)
+  :Enregistrer la configuration / version;
+else (non)
+  :Afficher les erreurs sans publier les changements;
+  stop
+endif
+:Appliquer la politique D1/D3 aux futures operations;
+:Conserver les resultats et instantanes deja valides;
+stop
+note right
+  Cible fonctionnelle : droits et politique de publication a preciser.
+  Effet sur les caisses deja achetees a arbitrer (D1/D3).
+end note
+@enduml

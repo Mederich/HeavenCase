@@ -1,0 +1,46 @@
+@startuml
+!include _theme.puml
+title Deploiement — cible validation / production
+caption Dockerfiles, compose et cadrage §10 | Architecture cible ancree dans le depot
+left to right direction
+node "Poste utilisateur" as CLIENT {
+  artifact "Navigateur\n800 x 600 inclus" as BROWSER
+}
+node "Environnement cible\nInstance distincte par validation / production" as ENV {
+  node "Entree HTTPS / routage\nA choisir [cible D6]" as EDGE
+  node "Conteneur web\nDockerfile present" as WEB {
+    artifact "Nginx :80\nBuild React / Vite" as SPA
+  }
+  node "Conteneur API\nDockerfile + compose presents" as APP {
+    artifact "Binaire Rust / Axum\nPORT=3000 dans compose" as API
+  }
+  node "Conteneur PostgreSQL 17" as PG {
+    database "heavencase" as DATA
+    artifact "Volume postgres_data" as VOL
+  }
+}
+cloud "Fournisseur SSO D2" as SSO
+cloud "Prestataire paiement D5" as PAY
+cloud "Service emails" as MAIL
+node "CI / livraison\nHENC-18 : cible" as CI
+BROWSER --> EDGE : HTTPS [cible]
+EDGE --> SPA : HTTP interne :80 [cible]
+EDGE --> API : routage API :3000 [cible]
+API --> DATA : PostgreSQL / SQLx :5432 [reseau prive]
+DATA -- VOL : donnees persistantes
+API --> SSO : protocole SSO / HTTPS a confirmer
+API --> PAY : API paiement / HTTPS
+PAY --> EDGE : notification serveur / HTTPS
+API --> MAIL : API ou SMTP selon prestataire
+CI ..> WEB : construire / deployer [cible]
+CI ..> APP : construire / deployer [cible]
+note bottom of APP
+  Ecart observe a resoudre dans D6 : Dockerfile EXPOSE 8080,
+  mais PORT et compose utilisent 3000. Aucun code modifie ici.
+  Le compose actuel assemble API + DB ; web / TLS sont une cible.
+end note
+note bottom of ENV
+  Hebergement, secrets, sauvegardes et restauration a definir.
+  Ce schema de cible ne prouve pas un deploiement en production.
+end note
+@enduml
