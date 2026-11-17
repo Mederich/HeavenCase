@@ -1,0 +1,16 @@
+[advisories]
+ignore = [
+    # rsa via sqlx-mysql : présent dans Cargo.lock mais jamais compilé (cargo tree -i rsa est vide)
+    "RUSTSEC-2023-0071",
+    # libsqlite3-sys via sqlx-sqlite : idem, jamais compilé
+    "RUSTSEC-2026-0459",
+    # zip 3.0.0 : build-dependency de utoipa-swagger-ui uniquement, décompresse sa propre
+    # archive Swagger UI au build, absent du binaire. À retirer quand une version de
+    # utoipa-swagger-ui embarquera zip 9 (juhaku/utoipa#1645).
+    "RUSTSEC-2026-0367",
+    "RUSTSEC-2026-0368",
+    "RUSTSEC-2026-0369",
+    "RUSTSEC-2026-0429",
+    "RUSTSEC-2026-0545",
+    "RUSTSEC-2026-0548",
+]
