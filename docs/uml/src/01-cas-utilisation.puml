@@ -1,0 +1,67 @@
+@startuml
+!include _theme.puml
+title Cas d’utilisation — frontiere et acteurs
+caption UC01–UC14 · HENC-7 a HENC-53 | MVP / R2
+left to right direction
+actor Visiteur as V
+actor "Utilisateur authentifie\n(inscription incomplete possible)" as U
+actor "Joueur active" as J
+actor Administrateur as A
+actor "Fournisseur SSO" as SSO
+actor "Prestataire paiement" as PAY
+actor "Service emails" as MAIL
+rectangle "Heaven Case" {
+  package "Decouverte" {
+    usecase "UC01 — Consulter catalogue,\ncontenu et probabilites\nFiltrage prix : R2" as C01
+  }
+  package "Compte et acces" {
+    usecase "UC02 — S’inscrire / se connecter\nEmail ou SSO" as C02
+    usecase "UC03 — Terminer l’inscription" as C03
+    usecase "Declarer sa date de naissance" as AGE
+    usecase "Accepter les CGU versionnees" as CGU
+    usecase "UC04 — Recuperer un mot\nde passe local oublie" as C04
+    usecase "UC05 — Consulter son profil\nEdition : R2" as C05
+  }
+  package "Credits, caisses et objets" {
+    usecase "UC06 — Lire solde / transactions" as C06
+    usecase "UC07 — Approvisionner\nCarte : MVP · skins : R2/D5" as C07
+    usecase "UC08 — Acheter une caisse [H1]" as C08
+    usecase "UC09 — Ouvrir et lire resultat\nAcceder a la preuve d’equite [D3]" as C09
+    usecase "UC10 — Consulter l’inventaire" as C10
+    usecase "UC11 — Revendre un objet" as C11 <<R2>>
+  }
+  package "Suivi et administration" {
+    usecase "UC12 — Lire ses statistiques\nPeriodes : R2" as C12
+    usecase "UC13 — Lire niveau / progression\nBadges : R2" as C13
+    usecase "UC14 — Gerer caisses, objets,\nprix et probabilites" as C14
+  }
+}
+V -- C01
+V -- C02
+V -- C04
+U -- C03
+J -- C01
+J -- C05
+J -- C06
+J -- C07
+J -- C08
+J -- C09
+J -- C10
+J -- C11
+J -- C12
+J -- C13
+A -- C14
+C03 ..> AGE : <<include>>
+C03 ..> CGU : <<include>>
+SSO -- C02
+PAY -- C07
+MAIL -- C04
+legend bottom left
+  R1/R2 : acces reserve seulement apres activation.
+  Les controles age/CGU valent aussi pour le SSO.
+  Personas : Lucas (decouverte), Thomas (CRT 800 x 600),
+  Noah (statistiques / gamification).
+  Ce sont des besoins, pas des roles distincts.
+  Responsive transverse : HENC-43, 46, 47, 48.
+endlegend
+@enduml

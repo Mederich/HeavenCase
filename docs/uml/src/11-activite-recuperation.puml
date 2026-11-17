@@ -1,0 +1,30 @@
+@startuml
+!include _theme.puml
+title S7 — Recuperation du mot de passe
+caption UC04 · HENC-32 · R4/R5 | MVP / R2 selon UC
+start
+:Saisir son email depuis Mot de passe oublie;
+:Afficher une confirmation generique;
+if (Identite locale existante ?) then (oui)
+  :Creer une demande avec jeton a usage unique;
+  :Envoyer le lien par email;
+else (non / SSO seul)
+  :Conserver la meme reponse publique;
+  stop
+endif
+:Ouvrir le lien et proposer un nouveau mot de passe;
+if (Jeton valide, non utilise et non expire ?) then (oui)
+if (Nouveau mot de passe conforme ?) then (oui)
+  :Preparer le changement;
+else (non)
+  :Afficher l'erreur sans consommer le jeton;
+  stop
+endif
+else (non)
+  :Refuser le changement et permettre une nouvelle demande;
+  stop
+endif
+:Transaction : enregistrer le hash,\nconsommer le jeton et revoquer les sessions;
+:Permettre une nouvelle connexion;
+stop
+@enduml

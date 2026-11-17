@@ -1,0 +1,39 @@
+@startuml
+!include _theme.puml
+title S3 — Achat atomique [H1]
+caption UC08 · HENC-12 · R6/R7 | MVP / R2 selon UC
+autonumber
+actor Joueur as J
+boundary "Interface web" as UI
+control "API / Achats" as API
+database "Persistance" as DB
+J -> UI : acheter une caisse
+UI -> API : typeCaisse + cleOperation
+API -> API : verifier compte actif
+API -> DB : retrouver operation deja validee
+alt Meme operation deja commise
+  DB --> API : AchatCaisse + CaisseAcquise
+  API --> UI : meme resultat, sans nouveau debit
+else Nouvelle operation
+  API -> DB : BEGIN ; proteger portefeuille / unicite operation
+  API -> DB : verifier caisse disponible + solde >= prix
+  alt Caisse indisponible / solde insuffisant
+    API -> DB : ROLLBACK
+    API --> UI : erreur explicite / lien depot
+  else Conditions reunies
+    API -> DB : debit + AchatCaisse + CaisseAcquise + MouvementCredits
+    API -> DB : tenter COMMIT
+    DB --> API : resultat de validation
+    alt Validation reussie
+      API --> UI : caisse acquise + solde actualise
+    else Echec / conflit transactionnel
+      API -> DB : ROLLBACK si transaction encore ouverte
+      API --> UI : reessayer ou recuperer operation existante
+    end
+  end
+end
+note over API,DB
+  H1/D1 : debit au moment de l'achat.
+  L'ouverture ulterieure ne debite pas a nouveau.
+end note
+@enduml

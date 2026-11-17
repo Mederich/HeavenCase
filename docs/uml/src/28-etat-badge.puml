@@ -1,0 +1,16 @@
+@startuml
+!include _theme.puml
+title Badge pour un compte — attribution unique
+caption UC13 · HENC-52 · R13 | Release 2
+[*] --> NonObtenu : badge applicable, attribution absente
+state "Non obtenu" as NonObtenu
+state "Obtenu" as Obtenu
+NonObtenu --> NonObtenu : consulter / condition non satisfaite
+NonObtenu --> Obtenu : action validee [condition D4 satisfaite]\n/ creer AttributionBadge unique avec date
+Obtenu --> Obtenu : consulter / traiter action repetee sans doublon
+note right of Obtenu
+  Vue du badge pour un compte, pas etat d'une attribution absente.
+  {unique compte, badge}
+  Revoquer / expirer un badge : non defini dans le cadrage.
+end note
+@enduml

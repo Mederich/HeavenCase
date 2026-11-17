@@ -1,0 +1,31 @@
+@startuml
+!include _theme.puml
+title S8 — Publication d’une configuration de caisse
+caption UC14 · HENC-17 · R9/R14 | MVP / R2 selon UC
+autonumber
+actor Administrateur as A
+boundary "Interface admin" as UI
+control "API / Administration" as API
+control "Catalogue" as CAT
+database "Persistance" as DB
+A -> UI : modifier caisse, objet, prix ou composition
+UI -> API : soumettre configuration
+API -> API : verifier identite et droits admin
+alt Acces refuse
+  API --> UI : refus cote serveur
+else Acces autorise
+  API -> CAT : valider donnees et ponderations
+  alt Configuration invalide
+    CAT --> UI : erreurs ; aucune publication
+  else Configuration valide
+    CAT -> DB : enregistrer configuration / version selon D1-D3
+    DB --> CAT : validation
+    CAT --> UI : publication / confirmation
+  end
+end
+note over CAT,DB
+  Les resultats et instantanes passes restent inchanges.
+  Effet sur caisses deja achetees : decision D1/D3.
+  Perimetre des droits admin : D7.
+end note
+@enduml

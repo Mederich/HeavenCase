@@ -1,0 +1,18 @@
+@startuml
+!include _theme.puml
+title Ouverture — tentative et resultat immuable
+caption UC09/10 · R9/R10/R14 | MVP
+[*] --> EnCours : ouverture autorisee et caisse protegee
+state "En cours" as EnCours
+state "Reussie" as Reussie
+state "Echouee" as Echouee
+EnCours --> Reussie : validation atomique\n/ persister resultat, preuve, possession et consommation
+EnCours --> Echouee : echec avant validation\n/ aucun gain et caisse rendue disponible
+Reussie --> Reussie : recuperer / meme resultat, sans tirage
+Echouee --> [*]
+note right of Reussie
+  Animation et deconnexion ne changent pas le resultat.
+  Reessai apres echec : autre tentative sur caisse disponible.
+  La journalisation des echecs reste un choix de persistance.
+end note
+@enduml

@@ -1,0 +1,47 @@
+@startuml
+!include _theme.puml
+title S2 — Depot et notification idempotente
+caption UC07 · HENC-20 · R6/R8 | MVP / R2 selon UC
+autonumber
+actor Joueur as J
+boundary "Interface web" as UI
+control "API / Paiements" as API
+participant "Prestataire paiement" as PAY
+database "Persistance" as DB
+J -> UI : choisir un pack
+UI -> API : demarrer depot (compte actif)
+API -> DB : creer Paiement en_attente
+API -> PAY : initier le paiement
+PAY --> UI : parcours de paiement
+opt Retour navigateur (ordre variable)
+  UI -> API : lire statut connu
+  API --> UI : statut persiste ; aucun credit par ce retour
+end
+PAY ->> API : notification serveur referencee
+API -> API : verifier authenticite, reference et montant
+alt Notification invalide
+  API --> PAY : refus sans credit
+else Notification valide
+  group Transaction atomique
+    API -> DB : verrouiller paiement / reference unique
+    alt Paiement deja traite
+      DB --> API : resultat existant
+    else Paiement confirme
+      API -> DB : confirmer + mouvement credit unique + solde
+    else Paiement echoue
+      API -> DB : statut echoue ; aucun mouvement credit
+    end
+    API -> DB : tenter COMMIT
+    DB --> API : resultat de validation
+  end
+  alt Transaction validee
+    API --> PAY : accuse de reception
+  else Echec de persistance
+    API -> DB : ROLLBACK si transaction encore ouverte
+    API --> PAY : echec technique ; notification retraitable
+  end
+end
+UI -> API : consulter solde / statut
+API --> UI : valeurs persistees
+note over API,DB : R8 : une reference prestataire ne credite qu'une fois.
+@enduml

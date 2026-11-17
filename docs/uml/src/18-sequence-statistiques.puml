@@ -1,0 +1,43 @@
+@startuml
+!include _theme.puml
+title S6 — Lectures statistiques et evenement de progression
+caption UC12/13 · HENC-49 a 52 · R12/R13 | MVP / R2 selon UC
+autonumber
+actor Joueur as J
+boundary "Interface web" as UI
+control "Statistiques" as STATS
+control "Progression / Badges" as GAME
+control "Module metier" as DOMAIN
+database "Persistance" as DB
+J -> UI : consulter tableau de bord
+UI -> STATS : compte connecte + periode
+STATS -> DB : agreger les ouvertures reussies du compte
+DB --> STATS : total et repartition, ou aucune donnee
+STATS --> UI : synthese / etat vide ; periode explicite
+UI -> GAME : lire niveau, progression et badges
+GAME -> DB : lire etat persiste du compte
+GAME --> UI : progression et accomplissements
+... Action eligible distincte de la lecture ...
+DOMAIN ->> GAME : action metier deja validee (actionId, compte)
+GAME -> GAME : appliquer les regles configurees D4
+alt Regles absentes / action non eligible
+  GAME -> GAME : aucune attribution arbitraire
+else Action eligible
+  group Transaction de progression
+    GAME -> DB : verifier unicite compte + actionId
+    alt Deja traitee
+      DB --> GAME : evenement existant ; aucun point supplementaire
+    else Nouvelle action
+      GAME -> DB : enregistrer evenement + progression
+      opt Release 2 et condition de badge satisfaite
+        GAME -> DB : creer AttributionBadge si absente
+      end
+    end
+    GAME -> DB : COMMIT ou annuler les effets partiels
+  end
+end
+note over DOMAIN,GAME
+  Evenement logique cible : ne prescrit pas de broker.
+  Le rafraichissement de l'ecran n'envoie pas d'action eligible.
+end note
+@enduml

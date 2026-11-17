@@ -1,0 +1,126 @@
+@startuml
+!include _theme.puml
+title Classes — portefeuille, achat, ouverture et inventaire
+caption UC06–UC11 | H1, D1, D3, D5 | Modele conceptuel cible
+
+top to bottom direction
+package "Compte et credits" {
+  class Compte {
+  id : UUID
+}
+  class Portefeuille {
+    soldeCredits : Entier
+    +verifierSolde(prix)
+  }
+  class MouvementCredits {
+    id : UUID
+    type : TypeMouvement
+    montantSigne : Entier
+    soldeApres : Entier
+    referenceOperation : Identifiant
+    date : Instant
+  }
+  class Paiement {
+    id : UUID
+    referencePrestataire : Texte
+    montantMonetaire : Entier
+    devise : CodeDevise
+    creditsPack : Entier
+    statut : StatutPaiement
+  }
+}
+package "Catalogue" {
+  class TypeCaisse {
+    id : UUID
+    nom : Texte
+    prixCredits : Entier
+    disponible : Booleen
+  }
+  class CompositionCaisse {
+    poidsTirage : EntierPositif
+  }
+  class ObjetCatalogue {
+    id : UUID
+    nom : Texte
+    rarete : Rarete
+    valeurCredits : Entier
+  }
+}
+package "Achat et ouverture [H1]" {
+  class AchatCaisse {
+    id : UUID
+    cleIdempotence : Texte
+    prixPayeCredits : Entier
+    date : Instant
+  }
+  class CaisseAcquise {
+    id : UUID
+    statut : DisponibleReserveeConsommee
+    +estOuvrablePar(compte)
+  }
+  class Ouverture {
+    id : UUID
+    statut : EnCoursReussieEchouee
+    date : Instant
+    instantaneTirage : DonneesVersionnees
+  }
+  class PreuveTirage {
+    engagement : Texte
+    donneesVerification : Donnees
+    methode : Version
+  }
+}
+package "Inventaire" {
+  class PossessionObjet {
+    id : UUID
+    statut : DisponibleVendue
+    acquiseLe : Instant
+  }
+  class Revente <<R2>> {
+    id : UUID
+    valeurRetenueCredits : Entier
+    cleIdempotence : Texte
+  }
+}
+Compte "1" -- "1" Portefeuille
+Portefeuille "1" -- "0..*" MouvementCredits
+Compte "1" -- "0..*" Paiement
+Paiement "0..1" -- "0..1" MouvementCredits : credit si confirme
+TypeCaisse "1" -- "0..*" CompositionCaisse
+ObjetCatalogue "1" -- "0..*" CompositionCaisse
+Compte "1" -- "0..*" AchatCaisse
+AchatCaisse "1" -- "1" CaisseAcquise : cree
+AchatCaisse "0..1" -- "1" MouvementCredits : debit valide
+TypeCaisse "1" -- "0..*" CaisseAcquise
+Compte "1" -- "0..*" CaisseAcquise : proprietaire
+CaisseAcquise "1" -- "0..*" Ouverture : tentatives
+Ouverture "1" -- "0..1" PreuveTirage
+Ouverture "1" -- "0..1" PossessionObjet : resultat si reussie
+ObjetCatalogue "1" -- "0..*" PossessionObjet
+Compte "1" -- "0..*" PossessionObjet : detient
+PossessionObjet "1" -- "0..1" Revente
+Revente "0..1" -- "1" MouvementCredits : credit valide
+note bottom of MouvementCredits
+  Cible : solde = somme des mouvements ; entiers, jamais de float.
+  Un mouvement vise exactement une operation de son type.
+  Les liens optionnels paiement/achat/revente sont exclusifs.
+  Leurs cardinalites montrent les operations deja validees :
+  paiement confirme / achat commis / revente reussie -> 1 mouvement.
+end note
+note bottom of CaisseAcquise
+  H1/D1 : achat prealable, caisse ouvrable plus tard.
+  Debit a l'achat seulement ; aucun debit a l'ouverture.
+  {au plus 1 ouverture reussie par caisse acquise}
+  HENC-12 et le schema SQL actuel divergent : arbitrage requis.
+end note
+note bottom of PreuveTirage
+  Une ouverture reussie a exactement 1 preuve et 1 possession.
+  Une tentative echouee n'attribue aucune possession.
+  D3 : methode, donnees, revelations et versions a definir.
+end note
+note bottom of CompositionCaisse
+  TypeCaisse disponible => au moins 1 composition, poids > 0.
+  D1/D3 : moment de fixation du contenu/prix et instantanes.
+end note
+
+@enduml

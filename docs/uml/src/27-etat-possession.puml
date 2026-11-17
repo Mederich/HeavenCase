@@ -1,0 +1,16 @@
+@startuml
+!include _theme.puml
+title PossessionObjet — disponibilite et revente
+caption UC10/11 · HENC-15/16 · R11 | Release 2
+[*] --> Disponible : ouverture reussie / attribution
+state "Disponible" as Disponible
+state "Vendue" as Vendue
+Disponible --> Disponible : consulter / annuler vente / echec atomique
+Disponible --> Vendue : vente confirmee [proprietaire autorise]\n/ revente + credit + mouvement atomiques
+Vendue --> Vendue : redemander meme vente / aucun credit supplementaire
+note right of Vendue
+  Transition de vente : Release 2.
+  Retiree / amelioree existent dans le schema initial,
+  mais ne sont pas engages dans ce perimetre.
+end note
+@enduml

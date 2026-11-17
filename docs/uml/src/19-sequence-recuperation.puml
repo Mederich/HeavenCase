@@ -1,0 +1,35 @@
+@startuml
+!include _theme.puml
+title S7 — Jeton unique et revocation des sessions
+caption UC04 · HENC-32 · R4/R5 | MVP / R2 selon UC
+autonumber
+actor Titulaire as U
+boundary "Interface web" as UI
+control "API / Acces" as API
+participant "Service emails" as MAIL
+database "Persistance" as DB
+U -> UI : demander recuperation par email
+UI -> API : email
+API -> DB : retrouver identite locale
+alt Identite locale presente
+  API -> DB : stocker empreinte du jeton + expiration
+  API ->> MAIL : envoyer lien de recuperation
+else Compte absent ou exclusivement SSO
+  API -> API : ne pas creer de mot de passe local
+end
+API --> UI : meme confirmation generique
+U -> UI : ouvrir lien et choisir nouveau mot de passe
+UI -> API : jeton + nouveau mot de passe
+API -> DB : BEGIN ; verifier jeton / expiration / usage
+alt Jeton invalide, expire ou utilise
+  API -> DB : ROLLBACK
+  API --> UI : refus + nouvelle demande possible
+else Jeton valide, mot de passe non conforme
+  API -> DB : terminer sans consommer le jeton
+  API --> UI : erreur de validation ; nouvelle saisie possible
+else Jeton valide et mot de passe conforme
+  API -> DB : modifier hash + consommer jeton + revoquer sessions
+  API -> DB : COMMIT
+  API --> UI : reconnexion requise
+end
+@enduml

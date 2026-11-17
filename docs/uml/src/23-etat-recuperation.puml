@@ -1,0 +1,19 @@
+@startuml
+!include _theme.puml
+title Demande de reinitialisation — usage unique
+caption UC04 · HENC-32 · R4 | MVP
+[*] --> Valide : demande pour identite locale
+state "Valide" as Valide
+state "Utilisee" as Utilisee
+state "Expiree" as Expiree
+Valide --> Valide : proposition invalide / conserver usage disponible
+Valide --> Utilisee : nouveau mot de passe valide [jeton non expire]\n/ modifier hash + consommer + revoquer sessions atomiquement
+Valide --> Expiree : expiration atteinte
+Utilisee --> [*]
+Expiree --> [*]
+note right of Utilisee
+  Un nouveau clic ne modifie rien.
+  Une nouvelle recuperation cree une nouvelle demande.
+  Compte exclusivement SSO : pas de demande locale.
+end note
+@enduml

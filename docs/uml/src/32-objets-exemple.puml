@@ -1,0 +1,67 @@
+@startuml
+!include _theme.puml
+title Objets — exemple apres achat puis ouverture [H1]
+caption UC08/09/10 · R6–R10 · exemple fictif | Exemple illustratif, pas donnees reelles
+left to right direction
+object "u42 : Compte" as U {
+  statut = actif
+}
+object "w42 : Portefeuille" as W {
+  soldeCredits = 900
+}
+object "m1 : MouvementCredits" as M1 {
+  type = depot
+  montantSigne = +1000
+  soldeApres = 1000
+}
+object "p1 : Paiement" as P {
+  statut = confirme
+  creditsPack = 1000
+}
+object "m2 : MouvementCredits" as M2 {
+  type = achat_caisse [H1]
+  montantSigne = -100
+  soldeApres = 900
+}
+object "a7 : AchatCaisse" as A {
+  prixPayeCredits = 100
+}
+object "ca7 : CaisseAcquise" as CA {
+  statut = consommee
+}
+object "t1 : TypeCaisse" as TC {
+  nom = Exemple
+}
+object "o9 : Ouverture" as O {
+  statut = reussie
+}
+object "pr9 : PreuveTirage" as PR {
+  methode = a_valider_D3
+}
+object "i9 : PossessionObjet" as I {
+  statut = disponible
+}
+object "skin3 : ObjetCatalogue" as ITEM {
+  rarete = rare
+}
+U -- W
+W -- M1
+W -- M2
+U -- P
+P -- M1
+U -- A
+A -- M2
+A -- CA
+CA -- TC
+CA -- O
+O -- PR
+O -- I
+U -- I
+I -- ITEM
+note bottom of M2
+  1000 - 100 = 900 credits ; aucun debit a l'ouverture sous H1.
+  Valeurs fictives pour verifier les cardinalites et invariants.
+  Aucun taux euros / credits n'est impose par cet exemple (D5).
+  Le type achat_caisse est une cible : le schema actuel utilise case_open.
+end note
+@enduml

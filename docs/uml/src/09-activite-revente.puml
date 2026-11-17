@@ -1,0 +1,31 @@
+@startuml
+!include _theme.puml
+title S5 — Revente d’un objet
+caption UC11 · HENC-16 · R11 | Release 2
+start
+:Selectionner une possession d'objet;
+:Afficher la valeur de revente et demander confirmation;
+if (Confirmation ?) then (oui)
+  :Verifier compte actif et proprietaire;
+else (non)
+  :Conserver l'objet et le solde;
+  stop
+endif
+if (Operation deja validee ?) then (oui)
+  :Restituer la revente existante;
+  stop
+endif
+:Proteger possession et portefeuille dans une transaction;
+if (Possession encore disponible ?) then (oui)
+  :Marquer vendue, enregistrer revente,\ncrediter portefeuille et mouvement lie;
+else (non)
+  :Annuler et refuser une seconde vente;
+  stop
+endif
+if (Validation reussie ?) then (oui)
+  :Actualiser inventaire et historique;
+else (non)
+  :Annuler sans credit ni retrait isole;
+endif
+stop
+@enduml

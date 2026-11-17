@@ -1,0 +1,50 @@
+@startuml
+!include _theme.puml
+title Composants — socle observe et cible fonctionnelle
+caption Depot c5d145b · cadrage §10 | Observe + cible clairement distingues
+left to right direction
+actor "Utilisateur / administrateur" as USER
+component "Interface web\nReact / TypeScript / Vite" as UI <<present>>
+package "Serveur Rust / Axum [present]" {
+  component "Routeur HTTP\n/health, /health/db, /users" as API <<present>>
+  component "Acces et comptes" as AUTH <<cible>>
+  component "Catalogue / admin" as CAT <<cible>>
+  component "Achats / ouvertures" as OPEN <<cible>>
+  component "Portefeuille / paiements" as MONEY <<cible>>
+  component "Inventaire / revente" as INV <<cible>>
+  component "Statistiques / progression" as GAME <<cible>>
+  component "SQLx / migrations" as SQLX <<present>>
+}
+database "PostgreSQL 17\nSchema initial disponible" as DB
+component "SSO" as SSO <<externe>>
+component "Paiement" as PAY <<externe>>
+component "Emails" as MAIL <<externe>>
+USER --> UI : interface responsive cible
+UI ..> API : HTTPS / JSON [cible D6]
+API ..> AUTH
+API ..> CAT
+API ..> OPEN
+API ..> MONEY
+API ..> INV
+API ..> GAME
+AUTH ..> SQLX
+CAT ..> SQLX
+OPEN ..> SQLX
+MONEY ..> SQLX
+INV ..> SQLX
+GAME ..> SQLX
+SQLX --> DB : acces PostgreSQL observe
+AUTH ..> SSO : fournisseur D2
+AUTH ..> MAIL : liens de recuperation
+MONEY ..> PAY : paiement / notification
+note bottom of API
+  Observe : socle HTTP, connexion PostgreSQL et migrations.
+  /users contient encore des reponses de demonstration.
+  Orange : fonctionnalites cibles du cadrage, pas livrees.
+end note
+note bottom of DB
+  Schema existant : users, cases, items, case_openings, etc.
+  H1 exige de completer le modele achat / caisse acquise.
+  Consentements, sessions et progression restent a concevoir.
+end note
+@enduml

@@ -1,0 +1,16 @@
+@startuml
+!include _theme.puml
+title Compte — activation et inscription incomplete
+caption UC02/03 · R1/R2 | MVP
+[*] --> Incomplete : identite creee / retrouvee
+state "Inscription incomplete" as Incomplete
+state "Compte actif" as Actif
+Incomplete --> Incomplete : reprise / conserver les donnees\nconditions age-CGU non satisfaites ou echec\n/ refuser activation et permettre correction
+Incomplete --> Actif : finaliser [identite valide et age >= 18\net acceptation CGU persistee]
+Actif --> Actif : consulter / agir [session valide et droits suffisants]
+note right of Actif
+  L'etat connecte appartient a Session.
+  Deconnexion / expiration ne desactive pas le compte.
+  Renouvellement des CGU ou suspension : politique D7.
+end note
+@enduml
