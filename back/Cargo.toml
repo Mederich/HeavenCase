@@ -22,5 +22,5 @@ uuid = { version = "1.29.0", features = ["serde"] }
 rand_core = { version = "0.6", features = ["getrandom"] }
 password-auth = "1"
 cookie = "0.18.2"
-tower-sessions = "0.14"
+tower-sessions = "0.15"
 tower-sessions-sqlx-store = { version = "0.15", features = ["postgres"] }
