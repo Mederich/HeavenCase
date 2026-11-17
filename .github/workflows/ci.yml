@@ -8,6 +8,10 @@ on:
     branches:
       - master
       - dev
+      - feat/**
+      - defect/**
+      - incident/**
+      - poc/**
 
 permissions:
   contents: read
