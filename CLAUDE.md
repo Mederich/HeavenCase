@@ -28,7 +28,7 @@ cargo test                                   # tests #[sqlx::test], Postgres req
 cargo test <nom>                             # un seul test
 ```
 
-`APP_URL` doit pointer vers le **front** : les mails ouvrent `{APP_URL}/auth/verify` et `{APP_URL}/reset-password`. `back/api.http` contient des requêtes d'exemple, Swagger est sur `/swagger-ui`.
+`APP_URL` doit pointer vers le **front** : les mails ouvrent `{APP_URL}/auth/verify` et `{APP_URL}/reset-password`. `back/api.http` contient des requêtes d'exemple, Swagger est sur `/swagger-ui` ; `OPENAPI_OUT=openapi.json cargo test openapi_spec` exporte la spec sans base. Toute nouvelle route va dans `paths(...)` de `routes/mod.rs`, avec `security(("session" = []))` si elle utilise `AuthUser`, et `body = ErrorBody` sur ses erreurs JSON.
 
 ### Front (`front/`) : Vite 6, React 19, TypeScript, Tailwind v4, shadcn/ui
 
@@ -36,6 +36,8 @@ cargo test <nom>                             # un seul test
 npm run dev      # /api relayé vers http://localhost:3000 (API_PROXY_TARGET pour un autre port)
 npm run lint     # CI
 npm run build    # CI : tsc -b puis vite build
+npm run storybook        # http://localhost:6006
+npm run build-storybook  # CI
 ```
 
 npm est le gestionnaire de paquets (`package-lock.json`).
@@ -66,4 +68,5 @@ npm est le gestionnaire de paquets (`package-lock.json`).
 
 - Avant de créer une branche, lire les US Linear (projet Heaven Case, équipe HENC). Une branche `feat/HENC-<feature>/<nom>` regroupe des branches `us/HENC-<us>/<nom>`, puis PR vers `dev`. Seul `dev` peut être mergé dans `master`.
 - Commits conventionnels en français (`feat: …`, `fix: …`), terminés par `Refs HENC-x`. Titre de PR : `[Dev] [HENC-x] Nom de la feature`.
-- La CI ne lance les jobs front ou back que si `front/**` ou `back/**` change. `npm audit` et `cargo audit` sont informatifs.
+- Chaque composant partagé a ses stories (`*.stories.tsx` à côté du composant, données dans `src/stories/fixtures.ts`).
+- La CI ne lance les jobs front ou back que si `front/**` ou `back/**` change. `docs.yml` publie Storybook et Swagger sur GitHub Pages à chaque push sur `dev` / `master`. `npm audit` et `cargo audit` sont informatifs.

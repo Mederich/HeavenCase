@@ -4,6 +4,10 @@
 name: CI
 
 on:
+  push:
+    branches:
+      - master
+      - dev
   pull_request:
     branches:
       - master
@@ -84,6 +88,32 @@ jobs:
 
       - run: npm run build
 
+  front-storybook:
+    name: Front Storybook Build
+    needs: front-lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: front
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run build-storybook
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: storybook
+          path: front/storybook-static
+          retention-days: 14
+
   docker-front:
     name: Front Docker Build
     needs: front-build
@@ -140,6 +170,34 @@ jobs:
           workspaces: back
 
       - run: cargo clippy --all-targets -- -D warnings
+
+  back-openapi:
+    name: Back OpenAPI Export
+    needs: changes
+    if: needs.changes.outputs.back == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: back
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: back
+
+      # Test sans base : vérifie la spec et l'écrit dans openapi.json.
+      - run: cargo test openapi_spec
+        env:
+          OPENAPI_OUT: ${{ github.workspace }}/back/openapi.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openapi
+          path: back/openapi.json
+          retention-days: 14
 
   back-test:
     name: Back Test

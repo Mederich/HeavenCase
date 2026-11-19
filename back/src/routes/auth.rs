@@ -46,8 +46,8 @@ pub struct RegisterResponse {
     request_body = RegisterRequest,
     responses(
         (status = 201, description = "Compte créé, mail de validation envoyé", body = RegisterResponse),
-        (status = 400, description = "Données invalides"),
-        (status = 409, description = "Email déjà utilisé"),
+        (status = 400, description = "Données invalides", body = String, content_type = "text/plain"),
+        (status = 409, description = "Email déjà utilisé", body = String, content_type = "text/plain"),
     )
 )]
 pub async fn register(
@@ -149,7 +149,7 @@ pub struct VerifyQuery {
     params(VerifyQuery),
     responses(
         (status = 200, description = "Compte validé"),
-        (status = 400, description = "Lien invalide ou expiré"),
+        (status = 400, description = "Lien invalide ou expiré", body = String, content_type = "text/plain"),
     )
 )]
 pub async fn verify_email(
@@ -208,8 +208,8 @@ pub struct LoginResponse {
     request_body = LoginRequest,
     responses(
         (status = 200, description = "Connecté, cookie de session posé", body = LoginResponse),
-        (status = 401, description = "Identifiants incorrects"),
-        (status = 403, description = "Email non validé ou compte suspendu"),
+        (status = 401, description = "Identifiants incorrects", body = String, content_type = "text/plain"),
+        (status = 403, description = "Email non validé ou compte suspendu", body = String, content_type = "text/plain"),
     )
 )]
 pub async fn login(
@@ -285,9 +285,10 @@ pub struct MeResponse {
     get,
     path = "/auth/me",
     tag = "auth",
+    security(("session" = [])),
     responses(
         (status = 200, description = "Joueur connecté", body = MeResponse),
-        (status = 401, description = "Pas de session valide"),
+        (status = 401, description = "Pas de session valide", body = String, content_type = "text/plain"),
     )
 )]
 pub async fn me(
@@ -323,6 +324,7 @@ pub async fn me(
     post,
     path = "/auth/logout",
     tag = "auth",
+    security(("session" = [])),
     responses((status = 204, description = "Session supprimée"))
 )]
 pub async fn logout(session: Session) -> Result<StatusCode, ApiError> {
@@ -431,7 +433,7 @@ pub struct ResetPasswordRequest {
     request_body = ResetPasswordRequest,
     responses(
         (status = 200, description = "Mot de passe modifié"),
-        (status = 400, description = "Lien invalide ou expiré, ou mot de passe trop court"),
+        (status = 400, description = "Lien invalide ou expiré, ou mot de passe trop court", body = String, content_type = "text/plain"),
     )
 )]
 pub async fn reset_password(
