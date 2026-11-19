@@ -1,11 +1,17 @@
-import { Navigate, useLocation } from 'react-router'
+import { Navigate, useLocation, useSearchParams } from 'react-router'
 import { useAuth } from '@/auth/useAuth'
 import { InventoryPanel } from '@/components/profile/InventoryPanel'
+import { TransactionsPanel } from '@/components/profile/TransactionsPanel'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+type Tab = 'inventory' | 'history'
 
 export function ProfilePage() {
   const { user } = useAuth()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab: Tab = searchParams.get('tab') === 'history' ? 'history' : 'inventory'
 
   if (user === undefined) {
     return (
@@ -16,17 +22,27 @@ export function ProfilePage() {
   }
   if (user === null) return <Navigate to="/login" state={{ from: location.pathname }} replace />
 
+  const selectTab = (value: string) => {
+    setSearchParams(value === 'history' ? { tab: 'history' } : {}, { replace: true })
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
       <h1 className="font-display text-3xl font-bold text-gold-gradient">{user.username}</h1>
       {user.email && <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>}
 
-      <section aria-labelledby="inventory-title" className="mt-10">
-        <h2 id="inventory-title" className="mb-4 font-display text-xl font-bold">
-          Inventaire
-        </h2>
-        <InventoryPanel />
-      </section>
+      <Tabs value={tab} onValueChange={selectTab} className="mt-8">
+        <TabsList>
+          <TabsTrigger value="inventory">Inventaire</TabsTrigger>
+          <TabsTrigger value="history">Transactions</TabsTrigger>
+        </TabsList>
+        <TabsContent value="inventory" className="mt-6">
+          <InventoryPanel />
+        </TabsContent>
+        <TabsContent value="history" className="mt-6">
+          <TransactionsPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
