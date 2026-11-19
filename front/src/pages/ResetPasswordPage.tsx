@@ -46,10 +46,10 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <AuthLayout title="Nouveau mot de passe" subtitle="Choisis le nouveau mot de passe de ton compte.">
+    <AuthLayout title="Nouveau mot de passe">
       {!token ? (
         <div className="space-y-5">
-          <p className="text-sm text-muted-foreground">Ouvre le lien reçu par mail en entier, ou demandes-en un nouveau.</p>
+          <p className="text-sm text-muted-foreground">Lien incomplet.</p>
           <Button asChild size="lg" className="h-10 w-full">
             <Link to="/forgot-password">Demander un nouveau lien</Link>
           </Button>

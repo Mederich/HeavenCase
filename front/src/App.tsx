@@ -3,6 +3,8 @@ import { AuthProvider } from './auth/AuthProvider'
 import { Header } from './components/Header'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthPage } from './pages/AuthPage'
+import { CaseDetailPage } from './pages/CaseDetailPage'
+import { CasesPage } from './pages/CasesPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { HomePage } from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
@@ -27,6 +29,8 @@ function App() {
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
+            <Route path="cases" element={<CasesPage />} />
+            <Route path="cases/:slug" element={<CaseDetailPage />} />
             <Route path="login" element={<AuthPage mode="login" />} />
             <Route path="register" element={<AuthPage mode="register" />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />

@@ -45,9 +45,7 @@ export function VerifyEmailPage() {
       )}
       {status === 'error' && (
         <div className="space-y-5">
-          <p className="text-sm text-muted-foreground">
-            Le lien a peut-être expiré ou déjà servi. Si ton compte est déjà validé, connecte-toi directement.
-          </p>
+          <p className="text-sm text-muted-foreground">Lien expiré ou déjà utilisé.</p>
           <Button asChild size="lg" className="h-10 w-full">
             <Link to="/login">Aller à la connexion</Link>
           </Button>

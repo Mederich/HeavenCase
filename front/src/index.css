@@ -14,6 +14,14 @@
   --color-gold-600: #b9852a;
 
   --color-success: #8fd19e;
+
+  /* Grades de rareté CS2 */
+  --color-grade-milspec: #4b69ff;
+  --color-grade-restricted: #8847ff;
+  --color-grade-classified: #d32ce6;
+  --color-grade-covert: #eb4b4b;
+  --color-grade-special: #e4ae39;
+  --color-stattrak: #cf6a32;
 }
 
 @theme inline {

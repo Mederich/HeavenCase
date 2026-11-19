@@ -5,7 +5,8 @@ import tailwindcss from '@tailwindcss/vite'
 
 // En dev, /api est relayé vers l'API Rust : le front et l'API partagent la
 // même origine, donc le cookie de session passe sans configuration CORS.
-const apiTarget = 'http://localhost:3000'
+// API_PROXY_TARGET permet de viser une autre instance (ex. port déjà pris).
+const apiTarget = process.env.API_PROXY_TARGET ?? 'http://localhost:3000'
 
 // https://vite.dev/config/
 export default defineConfig({

@@ -27,7 +27,7 @@ export function ForgotPasswordPage() {
   return (
     <AuthLayout
       title="Mot de passe oublié"
-      subtitle="Indique l’email de ton compte, on t’envoie un lien pour choisir un nouveau mot de passe."
+      subtitle="Un lien de réinitialisation sera envoyé à cette adresse."
     >
       {sent ? (
         <div className="space-y-5">
