@@ -22,14 +22,10 @@ fn internal<E: std::fmt::Display>(e: E) -> ApiError {
     )
 }
 
-// ---------- Mots de passe ----------
-
-// Servira pour la connexion
 pub fn verify_password(password: &str, hash: &str) -> bool {
     password_auth::verify_password(password, hash).is_ok()
 }
 
-// ---------- Inscription ----------
 
 #[derive(Deserialize, ToSchema)]
 pub struct RegisterRequest {
@@ -165,7 +161,6 @@ pub async fn verify_email(
 
     let mut tx = state.pool.begin().await.map_err(internal)?;
 
-    // On consomme le jeton : il ne pourra servir qu'une fois
     let user_id: Option<Uuid> = sqlx::query_scalar(
         "DELETE FROM email_verification_tokens
          WHERE token_hash = $1 AND expires_at > now()
@@ -267,7 +262,7 @@ pub async fn login(
         return Err((StatusCode::FORBIDDEN, "Compte suspendu".into()));
     }
 
-    // Nouvel identifiant de session à la connexion (protection contre la fixation de session)
+
     session.cycle_id().await.map_err(internal)?;
     session.insert("user_id", user_id).await.map_err(internal)?;
 
@@ -275,4 +270,173 @@ pub async fn login(
         id: user_id,
         username,
     }))
+}
+
+
+fn new_token() -> (String, String) {
+    let mut bytes = [0u8; 32];
+    OsRng.fill_bytes(&mut bytes);
+    let token = hex::encode(bytes);
+    let hash = hex::encode(Sha256::digest(token.as_bytes()));
+    (token, hash)
+}
+
+
+#[derive(Deserialize, ToSchema)]
+pub struct ForgotPasswordRequest {
+    pub email: String,
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth/forgot-password",
+    tag = "auth",
+    request_body = ForgotPasswordRequest,
+    responses(
+        (status = 200, description = "Réponse identique que le compte existe ou non"),
+    )
+)]
+pub async fn forgot_password(
+    State(state): State<AppState>,
+    Json(req): Json<ForgotPasswordRequest>,
+) -> Result<&'static str, ApiError> {
+    const MESSAGE: &str =
+        "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé";
+
+    let email = req.email.trim().to_lowercase();
+
+    let user: Option<(Uuid, String)> = sqlx::query_as(
+        "SELECT id, username FROM users
+         WHERE lower(email) = $1 AND password_hash IS NOT NULL AND banned_at IS NULL",
+    )
+        .bind(&email)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(internal)?;
+
+    let Some((user_id, username)) = user else {
+        return Ok(MESSAGE);
+    };
+
+    let (token, token_hash) = new_token();
+
+    let mut tx = state.pool.begin().await.map_err(internal)?;
+
+    sqlx::query("DELETE FROM password_reset_tokens WHERE user_id = $1")
+        .bind(user_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(internal)?;
+
+    sqlx::query(
+        "INSERT INTO password_reset_tokens (token_hash, user_id, expires_at)
+         VALUES ($1, $2, now() + interval '1 hour')",
+    )
+        .bind(&token_hash)
+        .bind(user_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(internal)?;
+
+    tx.commit().await.map_err(internal)?;
+
+    let link = format!("{}/reset-password?token={}", state.app_url, token);
+    let body = format!(
+        "Bonjour {username},\n\nPour choisir un nouveau mot de passe, clique sur ce lien (valable 1 h) :\n{link}\n\nSi tu n'es pas à l'origine de cette demande, ignore ce mail."
+    );
+
+    let mailer = state.mailer.clone();
+    tokio::spawn(async move {
+        if let Err(e) = mailer
+            .send(&email, "Réinitialisation de ton mot de passe heavenCase", body)
+            .await
+        {
+            tracing::error!("Échec d'envoi du mail de réinitialisation : {e}");
+        }
+    });
+
+    Ok(MESSAGE)
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct ResetPasswordRequest {
+    pub token: String,
+    pub new_password: String,
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth/reset-password",
+    tag = "auth",
+    request_body = ResetPasswordRequest,
+    responses(
+        (status = 200, description = "Mot de passe modifié"),
+        (status = 400, description = "Lien invalide ou expiré, ou mot de passe trop court"),
+    )
+)]
+pub async fn reset_password(
+    State(state): State<AppState>,
+    Json(req): Json<ResetPasswordRequest>,
+) -> Result<&'static str, ApiError> {
+    if req.new_password.len() < 8 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Le mot de passe doit faire 8 caractères minimum".into(),
+        ));
+    }
+
+    let token_hash = hex::encode(Sha256::digest(req.token.as_bytes()));
+
+    let password = req.new_password;
+    let password_hash =
+        tokio::task::spawn_blocking(move || password_auth::generate_hash(&password))
+            .await
+            .map_err(internal)?;
+
+    let mut tx = state.pool.begin().await.map_err(internal)?;
+
+
+    let user_id: Option<Uuid> = sqlx::query_scalar(
+        "DELETE FROM password_reset_tokens
+         WHERE token_hash = $1 AND expires_at > now()
+         RETURNING user_id",
+    )
+        .bind(&token_hash)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(internal)?;
+
+    let Some(user_id) = user_id else {
+        return Err((StatusCode::BAD_REQUEST, "Lien invalide ou expiré".into()));
+    };
+
+    let (username, email): (String, String) = sqlx::query_as(
+        "UPDATE users
+         SET password_hash = $1,
+             email_verified_at = COALESCE(email_verified_at, now())
+         WHERE id = $2
+         RETURNING username, email",
+    )
+        .bind(&password_hash)
+        .bind(user_id)
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(internal)?;
+
+    tx.commit().await.map_err(internal)?;
+
+    let body = format!(
+        "Bonjour {username},\n\nTon mot de passe heavenCase vient d'être modifié.\n\nSi tu n'es pas à l'origine de ce changement, contacte-nous immédiatement."
+    );
+    let mailer = state.mailer.clone();
+    tokio::spawn(async move {
+        if let Err(e) = mailer
+            .send(&email, "Ton mot de passe heavenCase a été modifié", body)
+            .await
+        {
+            tracing::error!("Échec d'envoi du mail de confirmation : {e}");
+        }
+    });
+
+    Ok("Mot de passe modifié, tu peux te connecter")
 }
