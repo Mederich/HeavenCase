@@ -4,7 +4,7 @@ import { useAuth } from '../auth/useAuth'
 import { Alert } from '../components/Alert'
 import { AuthLayout } from '../components/AuthLayout'
 import { Field } from '../components/Field'
-import { ApiError } from '../lib/api'
+import { toastError } from '../lib/api'
 import { buttonPrimary } from '../lib/styles'
 
 type Mode = 'login' | 'register'
@@ -34,19 +34,17 @@ function LoginForm() {
   const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setError(null)
     setPending(true)
     try {
       await login(email.trim(), password)
       const from = (location.state as { from?: string } | null)?.from
       navigate(from ?? '/', { replace: true })
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Connexion impossible.')
+      toastError(err, 'Connexion impossible.')
     } finally {
       setPending(false)
     }
@@ -54,7 +52,6 @@ function LoginForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      {error && <Alert tone="error">{error}</Alert>}
       <Field
         label="Email"
         type="email"
@@ -114,13 +111,11 @@ function RegisterForm() {
   const [password, setPassword] = useState('')
   const [terms, setTerms] = useState(false)
   const [errors, setErrors] = useState<RegisterErrors>({})
-  const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setError(null)
     const found = validate(username, email, password, terms)
     setErrors(found)
     if (Object.keys(found).length > 0) return
@@ -130,7 +125,7 @@ function RegisterForm() {
       await register({ username: username.trim(), email: email.trim(), password })
       setDone(email.trim())
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Inscription impossible.')
+      toastError(err, 'Inscription impossible.')
     } finally {
       setPending(false)
     }
@@ -152,7 +147,6 @@ function RegisterForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
-      {error && <Alert tone="error">{error}</Alert>}
       <Field
         label="Pseudo"
         autoComplete="username"

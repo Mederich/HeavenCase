@@ -4,6 +4,8 @@
 // cookie de session. L'API renvoie ses erreurs soit en texte brut (routes
 // /auth), soit en JSON { "error": "..." } : les deux sont gérés ici.
 
+import { toast } from 'sonner'
+
 const API_BASE = import.meta.env.VITE_API_URL ?? '/api'
 
 export class ApiError extends Error {
@@ -32,7 +34,7 @@ async function readBody(res: Response): Promise<unknown> {
   return text
 }
 
-function errorMessage(body: unknown, status: number): string {
+function bodyMessage(body: unknown, status: number): string {
   if (typeof body === 'string' && body.trim()) return body
   if (body && typeof body === 'object' && 'error' in body && typeof body.error === 'string') {
     return body.error
@@ -56,6 +58,21 @@ export async function api<T>(path: string, options: { method?: Method; body?: un
   }
 
   const payload = await readBody(res)
-  if (!res.ok) throw new ApiError(res.status, errorMessage(payload, res.status))
+  if (!res.ok) throw new ApiError(res.status, bodyMessage(payload, res.status))
   return payload as T
+}
+
+/** Message à afficher pour une erreur levée par `api()`, ou `fallback` sinon. */
+export function errorMessage(err: unknown, fallback: string): string {
+  return err instanceof ApiError ? err.message : fallback
+}
+
+/**
+ * Affiche une erreur dans le toaster. Réservé aux erreurs hors formulaire
+ * (API, réseau) : les erreurs de champ restent affichées sous le champ.
+ * L'id évite d'empiler deux fois le même message.
+ */
+export function toastError(err: unknown, fallback: string): void {
+  const message = errorMessage(err, fallback)
+  toast.error(message, { id: message })
 }

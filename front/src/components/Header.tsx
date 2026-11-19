@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router'
 import { useAuth } from '../auth/useAuth'
+import { toastError } from '../lib/api'
 import { buttonGhost, buttonOutline, buttonPrimary } from '../lib/styles'
 import { Logo } from './Logo'
 
@@ -14,6 +15,8 @@ export function Header() {
     setLoggingOut(true)
     try {
       await logout()
+    } catch (err) {
+      toastError(err, 'Déconnexion impossible.')
     } finally {
       setLoggingOut(false)
     }

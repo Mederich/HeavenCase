@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { api, ApiError } from '../lib/api'
+import { api, ApiError, toastError } from '../lib/api'
 import { AuthContext, type AuthContextValue, type CurrentUser, type RegisterInput } from './context'
 
 async function fetchMe(): Promise<CurrentUser | null> {
@@ -17,9 +17,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     try {
       setUser(await fetchMe())
-    } catch {
-      // API injoignable : on affiche le site en mode déconnecté.
+    } catch (err) {
+      // API injoignable : on affiche le site en mode déconnecté et on prévient.
       setUser(null)
+      toastError(err, 'Impossible de vérifier ta session.')
     }
   }, [])
 
