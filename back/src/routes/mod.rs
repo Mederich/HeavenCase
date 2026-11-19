@@ -3,6 +3,7 @@ mod cases;
 mod fair;
 mod inventory;
 mod openings;
+mod transactions;
 mod users;
 
 use crate::state::AppState;
@@ -35,6 +36,7 @@ use utoipa_swagger_ui::SwaggerUi;
         openings::history,
         inventory::list,
         inventory::sell,
+        transactions::list,
     ),
     tags(
         (name = "health", description = "État du service"),
@@ -42,7 +44,8 @@ use utoipa_swagger_ui::SwaggerUi;
         (name = "users", description = "Profils des joueurs"),
         (name = "cases", description = "Catalogue de caisses"),
         (name = "fair", description = "Preuve d'équité (provably fair)"),
-        (name = "inventory", description = "Inventaire du joueur")
+        (name = "inventory", description = "Inventaire du joueur"),
+        (name = "wallet", description = "Solde et historique des crédits")
     )
 )]
 pub struct ApiDoc;
@@ -69,6 +72,7 @@ pub fn router() -> Router<AppState> {
         .route("/openings", get(openings::history))
         .route("/inventory", get(inventory::list))
         .route("/inventory/{id}/sell", post(inventory::sell))
+        .route("/transactions", get(transactions::list))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
 }
 
