@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useAuth } from '@/auth/useAuth'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { toastError } from '@/lib/api'
 import { formatCredits, rarityMeta, type Rarity } from '@/lib/cases'
-import { listInventory, type InventoryEntry, type SaleResult } from '@/lib/inventory'
+import type { InventoryEntry, SaleResult } from '@/lib/inventory'
 import { cn } from '@/lib/utils'
 import { InventoryCard } from './InventoryCard'
 import { SellDialog } from './SellDialog'
@@ -46,46 +44,23 @@ function compare(sort: Sort) {
   }
 }
 
-export function InventoryPanel() {
+interface InventoryPanelProps {
+  /** Tout l'inventaire (tous statuts) ; null pendant le chargement. */
+  items: InventoryEntry[] | null
+  failed: boolean
+  onSold: (sale: SaleResult) => void
+}
+
+export function InventoryPanel({ items: all, failed, onSold }: InventoryPanelProps) {
   const [status, setStatus] = useState<StatusFilter>('owned')
   const [rarity, setRarity] = useState<Rarity | 'all'>('all')
   const [sort, setSort] = useState<Sort>('recent')
-  const [result, setResult] = useState<{ status: StatusFilter; items: InventoryEntry[] } | null>(null)
-  const [failed, setFailed] = useState(false)
   const [selling, setSelling] = useState<InventoryEntry | null>(null)
-  const { setBalance } = useAuth()
 
-  useEffect(() => {
-    let active = true
-    listInventory(status)
-      .then((items) => {
-        if (!active) return
-        setFailed(false)
-        setResult({ status, items })
-      })
-      .catch((err) => {
-        if (!active) return
-        setFailed(true)
-        toastError(err, "Impossible de charger l'inventaire.")
-      })
-    return () => {
-      active = false
-    }
-  }, [status])
-
-  const onSold = (sale: SaleResult) => {
-    setResult((current) => {
-      if (!current) return current
-      const items =
-        current.status === 'owned'
-          ? current.items.filter((i) => i.id !== sale.inventory_item_id)
-          : current.items.map((i) => (i.id === sale.inventory_item_id ? { ...i, status: 'sold' as const } : i))
-      return { ...current, items }
-    })
-    setBalance(sale.balance_after)
-  }
-
-  const items = result?.status === status ? result.items : null
+  const items = useMemo(
+    () => (all ? all.filter((i) => status === 'all' || i.status === status) : null),
+    [all, status],
+  )
   const visible = useMemo(
     () => (items ?? []).filter((i) => rarity === 'all' || i.rarity === rarity).sort(compare(sort)),
     [items, rarity, sort],
@@ -95,7 +70,7 @@ export function InventoryPanel() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <div role="group" aria-label="Statut" className="flex rounded-lg border p-0.5">
+        <div role="group" aria-label="Statut" className="flex h-9 w-full items-center rounded-lg border p-0.5 sm:w-auto">
           {statusFilters.map((f) => (
             <button
               key={f.value}
@@ -103,7 +78,7 @@ export function InventoryPanel() {
               aria-pressed={status === f.value}
               onClick={() => setStatus(f.value)}
               className={cn(
-                'rounded-md px-3 py-1.5 text-sm transition-colors',
+                'h-7 flex-1 rounded-md px-3 text-sm sm:flex-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
                 status === f.value ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground',
               )}
             >
@@ -112,8 +87,9 @@ export function InventoryPanel() {
           ))}
         </div>
 
+        <div className="flex w-full gap-3 sm:w-auto">
         <Select value={rarity} onValueChange={(v) => setRarity(v as Rarity | 'all')}>
-          <SelectTrigger className="w-44" aria-label="Rareté">
+          <SelectTrigger className="min-w-0 flex-1 sm:w-44 sm:flex-none" aria-label="Rareté">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -127,7 +103,7 @@ export function InventoryPanel() {
         </Select>
 
         <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
-          <SelectTrigger className="w-48" aria-label="Tri">
+          <SelectTrigger className="min-w-0 flex-1 sm:w-48 sm:flex-none" aria-label="Tri">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -138,6 +114,7 @@ export function InventoryPanel() {
             ))}
           </SelectContent>
         </Select>
+        </div>
 
         {items && (
           <p className="text-sm text-muted-foreground sm:ml-auto">

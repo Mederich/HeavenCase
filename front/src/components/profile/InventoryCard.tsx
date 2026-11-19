@@ -20,7 +20,7 @@ export function InventoryCard({ entry, action }: InventoryCardProps) {
       aria-label={entry.name}
     >
       <div className="flex items-center justify-between gap-2 px-3 pt-2.5 text-xs">
-        <Badge variant={owned ? 'secondary' : 'outline'}>{statusLabel[entry.status]}</Badge>
+        {owned ? <span className={cn('font-medium', meta.text)}>{meta.label}</span> : <Badge variant="outline">{statusLabel[entry.status]}</Badge>}
         {entry.exterior && (
           <abbr title={exteriorLabel[entry.exterior]} className="font-medium text-muted-foreground no-underline">
             {entry.exterior}
@@ -30,7 +30,6 @@ export function InventoryCard({ entry, action }: InventoryCardProps) {
       <ItemVisual item={entry} className="aspect-[4/3] w-full" />
       <div className={cn('flex flex-1 flex-col border-t-2 px-3 pt-2 pb-3', meta.border)}>
         <SkinName item={entry} />
-        <p className={cn('mt-0.5 text-xs', meta.text)}>{meta.label}</p>
         <p className="mt-1 text-sm font-semibold tabular-nums text-gold-300">{formatCredits(entry.value)}</p>
         <p className="mt-1 text-xs text-muted-foreground">
           <time dateTime={entry.acquired_at}>{formatDateTime(entry.acquired_at)}</time>
