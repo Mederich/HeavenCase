@@ -7,6 +7,7 @@ mod fair;
 mod inventory;
 mod mailer;
 mod opening;
+mod payments;
 mod routes;
 mod seeds;
 mod state;
