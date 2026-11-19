@@ -75,4 +75,11 @@ POST http://localhost:3000/cases/aube/open
 
 ###
 
+POST http://localhost:3000/cases/aube/open
+Content-Type: application/json
+
+{ "count": 5 }
+
+###
+
 GET http://localhost:3000/openings?limit=10

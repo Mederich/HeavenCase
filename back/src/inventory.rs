@@ -175,7 +175,7 @@ pub async fn sell(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{opening::open_case, testutil::create_user};
+    use crate::testutil::{create_user, open_case};
 
     #[test]
     fn filtre_de_statut() {

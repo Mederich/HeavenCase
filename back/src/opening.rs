@@ -33,16 +33,28 @@ pub struct OpeningResult {
     pub balance_after: i64,
 }
 
-/// Achète et ouvre la caisse `slug` pour le joueur.
+/// Nombre maximal de caisses ouvertes en une seule demande.
+pub const MAX_OPEN_COUNT: u32 = 10;
+
+/// Achète et ouvre `count` exemplaires de la caisse `slug` pour le joueur.
 ///
 /// Tout est fait dans une transaction qui verrouille la ligne du joueur :
 /// deux ouvertures simultanées ne peuvent pas dépenser le même solde ni
-/// réutiliser le même nonce.
-pub async fn open_case(
+/// réutiliser le même nonce. Le solde doit couvrir le prix total, sinon rien
+/// n'est débité. Chaque caisse a son propre nonce, sa ligne `case_openings`
+/// et sa transaction `case_open`, vérifiables une par une.
+pub async fn open_cases(
     pool: &PgPool,
     user_id: Uuid,
     slug: &str,
-) -> Result<OpeningResult, AppError> {
+    count: u32,
+) -> Result<Vec<OpeningResult>, AppError> {
+    if !(1..=MAX_OPEN_COUNT).contains(&count) {
+        return Err(AppError::BadRequest(format!(
+            "Nombre de caisses invalide : entre 1 et {MAX_OPEN_COUNT}"
+        )));
+    }
+
     let mut tx = pool.begin().await?;
 
     let case = catalog::find_case(&mut *tx, slug)
@@ -61,10 +73,11 @@ pub async fn open_case(
         return Err(AppError::Forbidden("Compte suspendu".into()));
     }
     eligibility::ensure(&mut tx, user_id).await?;
-    if balance < case.price {
+    let total = case.price * i64::from(count);
+    if balance < total {
         return Err(AppError::PaymentRequired(format!(
             "Solde insuffisant : il te manque {} crédits",
-            case.price - balance
+            total - balance
         )));
     }
 
@@ -77,79 +90,87 @@ pub async fn open_case(
     }
 
     let seed = seeds::lock_active_seed(&mut tx, user_id).await?;
-    let ticket = fair::roll(&seed.seed, &client_seed, seed.nonce);
-    let item = fair::pick(&table, ticket)
-        .cloned()
-        .ok_or_else(|| AppError::Internal(format!("ticket {ticket} hors table pour {slug}")))?;
+    let mut results = Vec::with_capacity(count as usize);
 
-    let balance_after: i64 = sqlx::query_scalar(
-        "UPDATE users SET balance = balance - $2 WHERE id = $1 RETURNING balance",
-    )
-    .bind(user_id)
-    .bind(case.price)
-    .fetch_one(&mut *tx)
-    .await?;
+    for i in 0..count {
+        let nonce = seed.nonce + i as i32;
+        let ticket = fair::roll(&seed.seed, &client_seed, nonce);
+        let item = fair::pick(&table, ticket)
+            .cloned()
+            .ok_or_else(|| AppError::Internal(format!("ticket {ticket} hors table pour {slug}")))?;
 
-    let opening_id: Uuid = sqlx::query_scalar(
-        "INSERT INTO case_openings
-             (user_id, case_id, item_id, price_paid, item_value,
-              server_seed_hash, client_seed, nonce, roll_value)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-         RETURNING id",
-    )
-    .bind(user_id)
-    .bind(case.id)
-    .bind(item.item_id)
-    .bind(case.price)
-    .bind(item.value)
-    .bind(&seed.seed_hash)
-    .bind(&client_seed)
-    .bind(seed.nonce)
-    .bind(i64::from(ticket))
-    .fetch_one(&mut *tx)
-    .await?;
+        let balance_after: i64 = sqlx::query_scalar(
+            "UPDATE users SET balance = balance - $2 WHERE id = $1 RETURNING balance",
+        )
+        .bind(user_id)
+        .bind(case.price)
+        .fetch_one(&mut *tx)
+        .await?;
 
-    sqlx::query(
-        "INSERT INTO transactions (user_id, type, amount, balance_after, reference_id)
-         VALUES ($1, 'case_open', $2, $3, $4)",
-    )
-    .bind(user_id)
-    .bind(-case.price)
-    .bind(balance_after)
-    .bind(opening_id)
-    .execute(&mut *tx)
-    .await?;
+        let opening_id: Uuid = sqlx::query_scalar(
+            "INSERT INTO case_openings
+                 (user_id, case_id, item_id, price_paid, item_value,
+                  server_seed_hash, client_seed, nonce, roll_value)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+             RETURNING id",
+        )
+        .bind(user_id)
+        .bind(case.id)
+        .bind(item.item_id)
+        .bind(case.price)
+        .bind(item.value)
+        .bind(&seed.seed_hash)
+        .bind(&client_seed)
+        .bind(nonce)
+        .bind(i64::from(ticket))
+        .fetch_one(&mut *tx)
+        .await?;
 
-    let inventory_item_id: Uuid = sqlx::query_scalar(
-        "INSERT INTO inventory_items (user_id, item_id, source_opening_id)
-         VALUES ($1, $2, $3)
-         RETURNING id",
-    )
-    .bind(user_id)
-    .bind(item.item_id)
-    .bind(opening_id)
-    .fetch_one(&mut *tx)
-    .await?;
+        sqlx::query(
+            "INSERT INTO transactions (user_id, type, amount, balance_after, reference_id)
+             VALUES ($1, 'case_open', $2, $3, $4)",
+        )
+        .bind(user_id)
+        .bind(-case.price)
+        .bind(balance_after)
+        .bind(opening_id)
+        .execute(&mut *tx)
+        .await?;
 
-    sqlx::query("UPDATE server_seeds SET nonce = nonce + 1 WHERE id = $1")
+        let inventory_item_id: Uuid = sqlx::query_scalar(
+            "INSERT INTO inventory_items (user_id, item_id, source_opening_id)
+             VALUES ($1, $2, $3)
+             RETURNING id",
+        )
+        .bind(user_id)
+        .bind(item.item_id)
+        .bind(opening_id)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        results.push(OpeningResult {
+            opening_id,
+            case_slug: case.slug.clone(),
+            item,
+            inventory_item_id,
+            ticket,
+            nonce,
+            server_seed_hash: seed.seed_hash.clone(),
+            client_seed: client_seed.clone(),
+            price_paid: case.price,
+            balance_after,
+        });
+    }
+
+    sqlx::query("UPDATE server_seeds SET nonce = nonce + $2 WHERE id = $1")
         .bind(seed.id)
+        .bind(count as i32)
         .execute(&mut *tx)
         .await?;
 
     tx.commit().await?;
 
-    Ok(OpeningResult {
-        opening_id,
-        case_slug: case.slug,
-        item,
-        inventory_item_id,
-        ticket,
-        nonce: seed.nonce,
-        server_seed_hash: seed.seed_hash,
-        client_seed,
-        price_paid: case.price,
-        balance_after,
-    })
+    Ok(results)
 }
 
 /// Ligne de l'historique des ouvertures d'un joueur.
@@ -207,6 +228,12 @@ pub async fn history(
 mod tests {
     use super::*;
     use crate::testutil::create_user;
+
+    async fn open_case(pool: &PgPool, user: Uuid, slug: &str) -> Result<OpeningResult, AppError> {
+        open_cases(pool, user, slug, 1)
+            .await
+            .map(|mut v| v.remove(0))
+    }
 
     async fn balance(pool: &PgPool, user: Uuid) -> i64 {
         sqlx::query_scalar("SELECT balance FROM users WHERE id = $1")
@@ -353,6 +380,51 @@ mod tests {
         assert_eq!([a.is_ok(), b.is_ok()].iter().filter(|ok| **ok).count(), 1);
         assert_eq!(balance(&pool, user).await, 50);
         assert_eq!(count(&pool, "case_openings", user).await, 1);
+    }
+
+    #[sqlx::test]
+    async fn ouvre_plusieurs_caisses_avec_un_nonce_chacune(pool: PgPool) {
+        let user = create_user(&pool, 1_000).await;
+        let results = open_cases(&pool, user, "heaven", 5).await.unwrap();
+
+        assert_eq!(results.len(), 5);
+        assert_eq!(balance(&pool, user).await, 250);
+        let nonces: Vec<_> = results.iter().map(|r| r.nonce).collect();
+        assert_eq!(nonces, [0, 1, 2, 3, 4]);
+        let afters: Vec<_> = results.iter().map(|r| r.balance_after).collect();
+        assert_eq!(afters, [850, 700, 550, 400, 250]);
+        assert_eq!(count(&pool, "case_openings", user).await, 5);
+        assert_eq!(count(&pool, "inventory_items", user).await, 5);
+        assert_eq!(count(&pool, "transactions", user).await, 5);
+        assert_eq!(seeds::get_status(&pool, user).await.unwrap().nonce, 5);
+
+        // L'ouverture suivante reprend au nonce 5.
+        let next = open_case(&pool, user, "heaven").await.unwrap();
+        assert_eq!(next.nonce, 5);
+    }
+
+    #[sqlx::test]
+    async fn plusieurs_caisses_sans_solde_suffisant_ne_debite_rien(pool: PgPool) {
+        let user = create_user(&pool, 400).await;
+        match open_cases(&pool, user, "heaven", 3).await.unwrap_err() {
+            AppError::PaymentRequired(msg) => assert!(msg.contains("50 crédits"), "{msg}"),
+            other => panic!("attendu PaymentRequired, reçu {other:?}"),
+        }
+        assert_eq!(balance(&pool, user).await, 400);
+        assert_eq!(count(&pool, "case_openings", user).await, 0);
+        assert_eq!(seeds::get_status(&pool, user).await.unwrap().nonce, 0);
+    }
+
+    #[sqlx::test]
+    async fn nombre_de_caisses_hors_limites(pool: PgPool) {
+        let user = create_user(&pool, 100_000).await;
+        for n in [0, MAX_OPEN_COUNT + 1] {
+            assert!(matches!(
+                open_cases(&pool, user, "heaven", n).await,
+                Err(AppError::BadRequest(_))
+            ));
+        }
+        assert_eq!(balance(&pool, user).await, 100_000);
     }
 
     // Scénario 3 de HENC-24 : après rotation, les 5 ouvertures se recalculent.
