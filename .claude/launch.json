@@ -17,18 +17,21 @@
       "port": 5180
     },
     {
-      "name": "storybook",
-      "runtimeExecutable": "npm",
+      "name": "front-api3001",
+      "runtimeExecutable": "env",
       "runtimeArgs": [
+        "API_PROXY_TARGET=http://localhost:3001",
+        "npm",
         "--prefix",
         "front",
         "run",
-        "storybook",
+        "dev",
         "--",
-        "--no-open",
-        "--ci"
+        "--port",
+        "5181",
+        "--strictPort"
       ],
-      "port": 6006
+      "port": 5181
     }
   ]
 }

@@ -21,6 +21,8 @@ export interface AuthContextValue {
   register: (input: RegisterInput) => Promise<string>
   logout: () => Promise<void>
   refresh: () => Promise<void>
+  /** Met à jour le solde affiché avec celui renvoyé par l'API (achat, vente). */
+  setBalance: (balance: number) => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

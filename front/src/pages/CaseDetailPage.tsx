@@ -37,7 +37,7 @@ function Unavailable({ title, children }: { title: string; children: ReactNode }
 
 export function CaseDetailPage() {
   const { slug = '' } = useParams()
-  const { user, refresh } = useAuth()
+  const { user, setBalance } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [state, setState] = useState<State>({ status: 'loading' })
@@ -106,7 +106,7 @@ export function CaseDetailPage() {
       setSpinning(true)
       stage.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       // Le solde affiché dans le header suit le débit.
-      void refresh()
+      setBalance(result.balance_after)
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         toastError(err, 'Connecte-toi pour ouvrir une caisse.')
@@ -234,6 +234,7 @@ export function CaseDetailPage() {
         open={resultOpen}
         onOpenChange={setResultOpen}
         price={data.price}
+        onSold={setBalance}
         onOpenAgain={user && data.is_openable && missing === 0 ? handleOpen : null}
       />
     </div>
