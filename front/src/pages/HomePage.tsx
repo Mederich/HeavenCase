@@ -1,17 +1,35 @@
-import { Header } from '../components/Header'
+import { Link } from 'react-router'
+import { useAuth } from '../auth/useAuth'
+import { buttonPrimary } from '../lib/styles'
+import hero from '../assets/hero-zeus.jpg'
 
-export const HomePage = () => {
+export function HomePage() {
+  const { user } = useAuth()
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col">
-      <Header />
-      <main className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-        <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl text-white">
-          Bienvenue sur Heaven Case
-        </h2>
-        <p className="mt-3 max-w-md text-neutral-400 text-sm sm:text-base">
-          Plateforme d&apos;ouverture de caisses virtuelles. Projet React configuré avec Tailwind CSS v4.
+    <section className="relative isolate overflow-hidden">
+      <img src={hero} alt="" className="absolute inset-y-0 right-0 -z-10 h-full w-full object-cover object-top opacity-60 md:w-3/5" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ink via-ink/85 to-ink/10" />
+      <div className="mx-auto flex min-h-[calc(100svh-4rem)] max-w-7xl flex-col justify-center px-4 py-16 sm:px-6">
+        <h1 className="max-w-xl font-display text-4xl font-bold leading-tight text-gold-gradient sm:text-5xl">
+          Ouvrez des caisses et découvrez des objets divins
+        </h1>
+        <p className="mt-4 max-w-md text-base text-muted">
+          Des caisses aux probabilités affichées et des tirages que tu peux vérifier toi-même.
         </p>
-      </main>
-    </div>
+        <div className="mt-8">
+          {user ? (
+            <p className="text-sm text-parchment">
+              Bienvenue, <span className="font-semibold text-gold-300">{user.username}</span>. Le catalogue des caisses
+              arrive très bientôt.
+            </p>
+          ) : (
+            <Link to="/inscription" className={`${buttonPrimary} px-6 py-3`}>
+              Commencer maintenant
+            </Link>
+          )}
+        </div>
+      </div>
+    </section>
   )
 }
