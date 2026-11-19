@@ -1,0 +1,115 @@
+# Publie la documentation sur GitHub Pages à chaque push sur dev ou master :
+#   /            liens vers les deux docs
+#   /storybook/  composants du front (Storybook)
+#   /api/        API du back (Swagger UI + openapi.json)
+# Prérequis : Settings > Pages > Source = GitHub Actions.
+
+name: Docs
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+    paths:
+      - "front/**"
+      - "back/**"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  SWAGGER_UI_VERSION: 5.17.14
+
+jobs:
+  build:
+    name: Build Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+
+      - name: Storybook
+        working-directory: front
+        run: |
+          npm ci
+          npm run build-storybook -- --output-dir ../site/storybook
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: back
+
+      - name: Spec OpenAPI
+        working-directory: back
+        run: |
+          mkdir -p ../site/api
+          OPENAPI_OUT=../site/api/openapi.json cargo test openapi_spec
+
+      - name: Swagger UI et page d'accueil
+        run: |
+          cat > site/api/index.html <<HTML
+          <!doctype html>
+          <html lang="fr">
+            <head>
+              <meta charset="utf-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              <title>HeavenCases API</title>
+              <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@${SWAGGER_UI_VERSION}/swagger-ui.css" />
+            </head>
+            <body>
+              <div id="swagger-ui"></div>
+              <script src="https://unpkg.com/swagger-ui-dist@${SWAGGER_UI_VERSION}/swagger-ui-bundle.js"></script>
+              <script>SwaggerUIBundle({ url: 'openapi.json', dom_id: '#swagger-ui' })</script>
+            </body>
+          </html>
+          HTML
+          cat > site/index.html <<HTML
+          <!doctype html>
+          <html lang="fr">
+            <head>
+              <meta charset="utf-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              <title>HeavenCases - Documentation</title>
+            </head>
+            <body style="font-family: system-ui, sans-serif; background: #0b0a08; color: #f5f0e6; padding: 2rem">
+              <h1>HeavenCases - Documentation</h1>
+              <ul>
+                <li><a style="color: #e6c46b" href="storybook/">Storybook (front)</a></li>
+                <li><a style="color: #e6c46b" href="api/">Swagger (API)</a></li>
+                <li><a style="color: #e6c46b" href="api/openapi.json">openapi.json</a></li>
+              </ul>
+              <p>Commit ${GITHUB_SHA::7} sur ${GITHUB_REF_NAME}</p>
+            </body>
+          </html>
+          HTML
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy Docs
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

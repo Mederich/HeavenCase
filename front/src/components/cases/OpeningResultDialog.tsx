@@ -1,4 +1,8 @@
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { toastError } from '@/lib/api'
+import { sellItem } from '@/lib/inventory'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { exteriorLabel, formatCredits, rarityMeta, type OpeningResult } from '@/lib/cases'
 import { cn } from '@/lib/utils'
@@ -11,19 +15,51 @@ interface OpeningResultDialogProps {
   /** null : bouton masqué (solde insuffisant ou caisse indisponible). */
   onOpenAgain: (() => void) | null
   price: number
+  /** Appelé avec le nouveau solde après la revente du skin gagné. */
+  onSold: (balance: number) => void
 }
 
-export function OpeningResultDialog({ result, open, onOpenChange, onOpenAgain, price }: OpeningResultDialogProps) {
-  if (!result) return null
+export function OpeningResultDialog(props: OpeningResultDialogProps) {
+  if (!props.result) return null
+  // Une clé par ouverture remet l'état de vente à zéro.
+  return <ResultDialog key={props.result.opening_id} {...props} result={props.result} />
+}
+
+type SaleState = 'idle' | 'confirm' | 'pending' | 'sold'
+
+function ResultDialog({
+  result,
+  open,
+  onOpenChange,
+  onOpenAgain,
+  price,
+  onSold,
+}: OpeningResultDialogProps & { result: OpeningResult }) {
+  const [sale, setSale] = useState<SaleState>('idle')
   const item = result.item
   const meta = rarityMeta[item.rarity]
+
+  const confirmSale = async () => {
+    setSale('pending')
+    try {
+      const done = await sellItem(result.inventory_item_id)
+      setSale('sold')
+      toast.success(`${done.item_name} vendu : +${formatCredits(done.amount)}`)
+      onSold(done.balance_after)
+    } catch (err) {
+      setSale('idle')
+      toastError(err, 'Vente impossible.')
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="items-center text-center">
           <DialogTitle className="font-display text-2xl text-gold-gradient">Félicitations !</DialogTitle>
-          <DialogDescription>Le skin a été ajouté à ton inventaire.</DialogDescription>
+          <DialogDescription>
+            {sale === 'sold' ? `Skin vendu pour ${formatCredits(item.value)}.` : 'Le skin a été ajouté à ton inventaire.'}
+          </DialogDescription>
         </DialogHeader>
 
         <div className={cn('rounded-xl border-2 bg-card', meta.border)}>
@@ -54,16 +90,33 @@ export function OpeningResultDialog({ result, open, onOpenChange, onOpenAgain, p
           </dl>
         </details>
 
-        <DialogFooter className="gap-2 sm:justify-center">
-          <Button variant="outline" size="lg" onClick={() => onOpenChange(false)}>
-            Fermer
-          </Button>
-          {onOpenAgain && (
-            <Button size="lg" onClick={onOpenAgain}>
-              Rouvrir pour {formatCredits(price)}
+        {sale === 'confirm' || sale === 'pending' ? (
+          <DialogFooter className="gap-2 sm:justify-center">
+            <Button variant="outline" size="lg" onClick={() => setSale('idle')} disabled={sale === 'pending'}>
+              Annuler
             </Button>
-          )}
-        </DialogFooter>
+            <Button size="lg" onClick={confirmSale} disabled={sale === 'pending'}>
+              Confirmer la vente
+            </Button>
+          </DialogFooter>
+        ) : (
+          <DialogFooter className="gap-2 sm:justify-center">
+            {sale === 'idle' && (
+              <Button variant="outline" size="lg" onClick={() => setSale('confirm')}>
+                Vendre pour {formatCredits(item.value)}
+              </Button>
+            )}
+            {onOpenAgain ? (
+              <Button size="lg" onClick={onOpenAgain}>
+                Rouvrir pour {formatCredits(price)}
+              </Button>
+            ) : (
+              <Button variant="outline" size="lg" onClick={() => onOpenChange(false)}>
+                Fermer
+              </Button>
+            )}
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   )

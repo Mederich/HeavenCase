@@ -29,7 +29,7 @@ pub struct PublicUser {
     params(("id" = Uuid, Path, description = "Identifiant de l'utilisateur")),
     responses(
         (status = 200, description = "Profil public", body = PublicUser),
-        (status = 404, description = "Utilisateur introuvable"),
+        (status = 404, description = "Utilisateur introuvable", body = String, content_type = "text/plain"),
     )
 )]
 pub async fn get_user(

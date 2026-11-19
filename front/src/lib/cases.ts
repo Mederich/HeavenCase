@@ -49,8 +49,45 @@ export interface CaseDetail extends CaseSummary {
   is_openable: boolean
 }
 
-export function listCases() {
-  return api<CaseSummary[]>('/cases')
+/** Plage de prix en crédits, bornes incluses. */
+export interface PriceRange {
+  min?: number
+  max?: number
+}
+
+export interface PriceFilterErrors {
+  min?: string
+  max?: string
+}
+
+/** Valeur vide = pas de borne ; sinon un entier positif en crédits. */
+function parseBound(value: string): number | undefined | null {
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  if (!/^\d+$/.test(trimmed)) return null
+  return Number(trimmed)
+}
+
+/** Valide les deux bornes saisies : renvoie la plage ou les erreurs de champ. */
+export function parsePriceRange(min: string, max: string): { range: PriceRange } | { errors: PriceFilterErrors } {
+  const minValue = parseBound(min)
+  const maxValue = parseBound(max)
+  const errors: PriceFilterErrors = {}
+  if (minValue === null) errors.min = 'Entre un nombre entier de crédits.'
+  if (maxValue === null) errors.max = 'Entre un nombre entier de crédits.'
+  if (minValue === null || maxValue === null) return { errors }
+  if (minValue !== undefined && maxValue !== undefined && minValue > maxValue) {
+    return { errors: { max: 'Inférieur au prix min.' } }
+  }
+  return { range: { min: minValue, max: maxValue } }
+}
+
+export function listCases(range: PriceRange = {}) {
+  const params = new URLSearchParams()
+  if (range.min !== undefined) params.set('min_price', String(range.min))
+  if (range.max !== undefined) params.set('max_price', String(range.max))
+  const query = params.toString()
+  return api<CaseSummary[]>(query ? `/cases?${query}` : '/cases')
 }
 
 export function getCase(slug: string) {

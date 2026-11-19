@@ -3,6 +3,7 @@ mod catalog;
 mod eligibility;
 mod errors;
 mod fair;
+mod inventory;
 mod mailer;
 mod opening;
 mod routes;
@@ -10,6 +11,7 @@ mod seeds;
 mod state;
 #[cfg(test)]
 mod testutil;
+mod wallet;
 
 use state::AppState;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};

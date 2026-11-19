@@ -28,6 +28,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void refresh()
   }, [refresh])
 
+  // Solde à jour quand on revient sur l'onglet (achat fait dans un autre onglet).
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void fetchMe().then(setUser).catch(() => {})
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [])
+
+  const setBalance = useCallback((balance: number) => {
+    setUser((current) => (current ? { ...current, balance } : current))
+  }, [])
+
   const login = useCallback(async (email: string, password: string) => {
     await api('/auth/login', { method: 'POST', body: { email, password } })
     setUser(await fetchMe())
@@ -47,8 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, login, register, logout, refresh }),
-    [user, login, register, logout, refresh],
+    () => ({ user, login, register, logout, refresh, setBalance }),
+    [user, login, register, logout, refresh, setBalance],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
