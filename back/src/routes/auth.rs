@@ -26,7 +26,6 @@ pub fn verify_password(password: &str, hash: &str) -> bool {
     password_auth::verify_password(password, hash).is_ok()
 }
 
-
 #[derive(Deserialize, ToSchema)]
 pub struct RegisterRequest {
     pub username: String,
@@ -262,7 +261,6 @@ pub async fn login(
         return Err((StatusCode::FORBIDDEN, "Compte suspendu".into()));
     }
 
-
     session.cycle_id().await.map_err(internal)?;
     session.insert("user_id", user_id).await.map_err(internal)?;
 
@@ -272,7 +270,6 @@ pub async fn login(
     }))
 }
 
-
 fn new_token() -> (String, String) {
     let mut bytes = [0u8; 32];
     OsRng.fill_bytes(&mut bytes);
@@ -280,7 +277,6 @@ fn new_token() -> (String, String) {
     let hash = hex::encode(Sha256::digest(token.as_bytes()));
     (token, hash)
 }
-
 
 #[derive(Deserialize, ToSchema)]
 pub struct ForgotPasswordRequest {
@@ -309,10 +305,10 @@ pub async fn forgot_password(
         "SELECT id, username FROM users
          WHERE lower(email) = $1 AND password_hash IS NOT NULL AND banned_at IS NULL",
     )
-        .bind(&email)
-        .fetch_optional(&state.pool)
-        .await
-        .map_err(internal)?;
+    .bind(&email)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(internal)?;
 
     let Some((user_id, username)) = user else {
         return Ok(MESSAGE);
@@ -332,11 +328,11 @@ pub async fn forgot_password(
         "INSERT INTO password_reset_tokens (token_hash, user_id, expires_at)
          VALUES ($1, $2, now() + interval '1 hour')",
     )
-        .bind(&token_hash)
-        .bind(user_id)
-        .execute(&mut *tx)
-        .await
-        .map_err(internal)?;
+    .bind(&token_hash)
+    .bind(user_id)
+    .execute(&mut *tx)
+    .await
+    .map_err(internal)?;
 
     tx.commit().await.map_err(internal)?;
 
@@ -348,7 +344,11 @@ pub async fn forgot_password(
     let mailer = state.mailer.clone();
     tokio::spawn(async move {
         if let Err(e) = mailer
-            .send(&email, "Réinitialisation de ton mot de passe heavenCase", body)
+            .send(
+                &email,
+                "Réinitialisation de ton mot de passe heavenCase",
+                body,
+            )
             .await
         {
             tracing::error!("Échec d'envoi du mail de réinitialisation : {e}");
@@ -395,16 +395,15 @@ pub async fn reset_password(
 
     let mut tx = state.pool.begin().await.map_err(internal)?;
 
-
     let user_id: Option<Uuid> = sqlx::query_scalar(
         "DELETE FROM password_reset_tokens
          WHERE token_hash = $1 AND expires_at > now()
          RETURNING user_id",
     )
-        .bind(&token_hash)
-        .fetch_optional(&mut *tx)
-        .await
-        .map_err(internal)?;
+    .bind(&token_hash)
+    .fetch_optional(&mut *tx)
+    .await
+    .map_err(internal)?;
 
     let Some(user_id) = user_id else {
         return Err((StatusCode::BAD_REQUEST, "Lien invalide ou expiré".into()));
@@ -417,11 +416,11 @@ pub async fn reset_password(
          WHERE id = $2
          RETURNING username, email",
     )
-        .bind(&password_hash)
-        .bind(user_id)
-        .fetch_one(&mut *tx)
-        .await
-        .map_err(internal)?;
+    .bind(&password_hash)
+    .bind(user_id)
+    .fetch_one(&mut *tx)
+    .await
+    .map_err(internal)?;
 
     tx.commit().await.map_err(internal)?;
 
