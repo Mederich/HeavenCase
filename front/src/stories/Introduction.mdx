@@ -1,0 +1,26 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Introduction" />
+
+# HeavenCases : composants du front
+
+Composants React du site (Vite, React 19, Tailwind v4, shadcn/ui), affichés avec le thème noir et or de `src/index.css`.
+
+| Section     | Contenu                                                    |
+| ----------- | ---------------------------------------------------------- |
+| UI          | Composants shadcn/ui remappés sur la palette (`components/ui`) |
+| Formulaires | Champs avec erreur, aide et mot de passe masquable         |
+| Navigation  | Header (déconnecté, connecté, session en cours) et logo    |
+| Caisses     | Carte de caisse, carte de skin par grade CS2, roulette, résultat d'ouverture |
+| Retours     | Confirmations affichées dans la page                       |
+
+Les données d'exemple sont dans `src/stories/fixtures.ts`, au format de l'API. La session est simulée par le décorateur de `.storybook/preview.tsx` : une story choisit le joueur avec `parameters.user`.
+
+## Commandes
+
+```bash
+npm run storybook        # http://localhost:6006
+npm run build-storybook  # site statique dans storybook-static/
+```
+
+La documentation de l'API (Swagger) est servie par le back sur `/swagger-ui`.
