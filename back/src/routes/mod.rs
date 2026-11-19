@@ -18,6 +18,7 @@ use utoipa_swagger_ui::SwaggerUi;
         auth::verify_email,
         auth::login,
         cases::list,
+        cases::detail,
     ),
     tags(
         (name = "health", description = "État du service"),
@@ -36,6 +37,7 @@ pub fn router() -> Router<AppState> {
         .route("/auth/verify", get(auth::verify_email))
         .route("/auth/login", post(auth::login))
         .route("/cases", get(cases::list))
+        .route("/cases/{slug}", get(cases::detail))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
 }
 

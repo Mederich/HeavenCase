@@ -26,3 +26,7 @@ Content-Type: application/json
 ###
 
 GET http://localhost:3000/cases
+
+###
+
+GET http://localhost:3000/cases/aube
