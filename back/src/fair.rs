@@ -61,6 +61,8 @@ mod tests {
             image_url: None,
             rarity: "common".into(),
             value: 0,
+            exterior: None,
+            stattrak: false,
             drop_weight: weight as i32,
             probability: f64::from(weight) / 1_000.0,
             roll_min,

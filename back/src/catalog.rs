@@ -19,16 +19,23 @@ pub struct CaseSummary {
     pub description: Option<String>,
     /// Prix en crédits.
     pub price: i64,
+    /// Section du catalogue (ex. « Armes »), null si la caisse n'en a pas.
+    pub category_name: Option<String>,
+    pub category_slug: Option<String>,
 }
+
+const CASE_COLUMNS: &str = "c.id, c.name, c.slug, c.image_url, c.description, c.price,
+                            cat.name AS category_name, cat.slug AS category_slug";
 
 /// Caisses actives, de la moins chère à la plus chère.
 pub async fn list_cases(pool: &PgPool) -> Result<Vec<CaseSummary>, sqlx::Error> {
-    sqlx::query_as(
-        "SELECT id, name, slug, image_url, description, price
-         FROM cases
-         WHERE is_active
-         ORDER BY price, name",
-    )
+    sqlx::query_as(&format!(
+        "SELECT {CASE_COLUMNS}
+         FROM cases c
+         LEFT JOIN case_categories cat ON cat.id = c.category_id
+         WHERE c.is_active
+         ORDER BY cat.position NULLS LAST, c.price, c.name"
+    ))
     .fetch_all(pool)
     .await
 }
@@ -46,6 +53,9 @@ pub struct LootEntry {
     pub rarity: String,
     /// Valeur de revente en crédits.
     pub value: i64,
+    /// Usure : FN, MW, FT, WW ou BS.
+    pub exterior: Option<String>,
+    pub stattrak: bool,
     /// Poids en millièmes de pourcent (100 000 = 100 %).
     pub drop_weight: i32,
     /// Probabilité en pourcent, pour l'affichage.
@@ -72,11 +82,12 @@ pub async fn find_case<'e, E>(executor: E, slug: &str) -> Result<Option<CaseSumm
 where
     E: sqlx::PgExecutor<'e>,
 {
-    sqlx::query_as(
-        "SELECT id, name, slug, image_url, description, price
-         FROM cases
-         WHERE slug = $1 AND is_active",
-    )
+    sqlx::query_as(&format!(
+        "SELECT {CASE_COLUMNS}
+         FROM cases c
+         LEFT JOIN case_categories cat ON cat.id = c.category_id
+         WHERE c.slug = $1 AND c.is_active"
+    ))
     .bind(slug)
     .fetch_optional(executor)
     .await
@@ -89,6 +100,8 @@ struct LootRow {
     image_url: Option<String>,
     rarity: String,
     value: i64,
+    exterior: Option<String>,
+    stattrak: bool,
     drop_weight: i32,
 }
 
@@ -103,7 +116,7 @@ where
 {
     let rows: Vec<LootRow> = sqlx::query_as(
         "SELECT i.id AS item_id, i.name, i.image_url, i.rarity::text AS rarity, i.value,
-                ci.drop_weight
+                i.exterior, i.stattrak, ci.drop_weight
          FROM case_items ci
          JOIN items i ON i.id = ci.item_id
          WHERE ci.case_id = $1
@@ -127,6 +140,8 @@ fn with_ranges(rows: Vec<LootRow>) -> Vec<LootEntry> {
                 image_url: r.image_url,
                 rarity: r.rarity,
                 value: r.value,
+                exterior: r.exterior,
+                stattrak: r.stattrak,
                 drop_weight: r.drop_weight,
                 probability: f64::from(weight) / 1_000.0,
                 roll_min: next,
@@ -164,7 +179,7 @@ mod tests {
     use super::*;
 
     #[sqlx::test]
-    async fn liste_les_caisses_de_demo_par_prix(pool: PgPool) {
+    async fn liste_les_caisses_par_section_puis_par_prix(pool: PgPool) {
         let cases = list_cases(&pool).await.unwrap();
         let slugs: Vec<_> = cases.iter().map(|c| c.slug.as_str()).collect();
         assert_eq!(
@@ -172,12 +187,17 @@ mod tests {
             [
                 "cloud",
                 "heaven",
-                "celestial",
                 "olympus",
+                "celestial",
                 "divine",
-                "empyrean",
                 "godlike",
-                "pantheon"
+                "empyrean",
+                "pantheon",
+                "desert-eagle",
+                "ak-47",
+                "awp",
+                "gloves",
+                "knife"
             ]
         );
     }
@@ -205,9 +225,9 @@ mod tests {
     async fn plages_contigues_du_plus_rare_au_plus_commun(pool: PgPool) {
         let detail = case_detail(&pool, "heaven").await.unwrap().unwrap();
         let items = &detail.items;
-        assert_eq!(items[0].name, "AK-47 | Redline");
-        assert_eq!((items[0].roll_min, items[0].roll_max), (0, 499));
-        assert_eq!(items[0].probability, 0.5);
+        assert_eq!(items[0].name, "AWP | Asiimov");
+        assert_eq!((items[0].roll_min, items[0].roll_max), (0, 507));
+        assert_eq!(items[0].probability, 0.508);
         assert!(detail.is_openable);
         for pair in items.windows(2) {
             assert_eq!(pair[1].roll_min, pair[0].roll_max + 1);
