@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '@/auth/useAuth'
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toastError } from '@/lib/api'
 import { formatCredits, rarityMeta, type Rarity } from '@/lib/cases'
-import { listInventory, type InventoryEntry } from '@/lib/inventory'
+import { listInventory, type InventoryEntry, type SaleResult } from '@/lib/inventory'
 import { cn } from '@/lib/utils'
 import { InventoryCard } from './InventoryCard'
+import { SellDialog } from './SellDialog'
 
 type StatusFilter = 'owned' | 'sold' | 'all'
 type Sort = 'recent' | 'oldest' | 'value-desc' | 'value-asc'
@@ -50,6 +52,8 @@ export function InventoryPanel() {
   const [sort, setSort] = useState<Sort>('recent')
   const [result, setResult] = useState<{ status: StatusFilter; items: InventoryEntry[] } | null>(null)
   const [failed, setFailed] = useState(false)
+  const [selling, setSelling] = useState<InventoryEntry | null>(null)
+  const { refresh } = useAuth()
 
   useEffect(() => {
     let active = true
@@ -68,6 +72,18 @@ export function InventoryPanel() {
       active = false
     }
   }, [status])
+
+  const onSold = (sale: SaleResult) => {
+    setResult((current) => {
+      if (!current) return current
+      const items =
+        current.status === 'owned'
+          ? current.items.filter((i) => i.id !== sale.inventory_item_id)
+          : current.items.map((i) => (i.id === sale.inventory_item_id ? { ...i, status: 'sold' as const } : i))
+      return { ...current, items }
+    })
+    void refresh()
+  }
 
   const items = result?.status === status ? result.items : null
   const visible = useMemo(
@@ -159,10 +175,22 @@ export function InventoryPanel() {
       ) : (
         <div className={grid}>
           {visible.map((entry) => (
-            <InventoryCard key={entry.id} entry={entry} />
+            <InventoryCard
+              key={entry.id}
+              entry={entry}
+              action={
+                entry.status === 'owned' && (
+                  <Button variant="outline" className="w-full" onClick={() => setSelling(entry)}>
+                    Vendre
+                  </Button>
+                )
+              }
+            />
           ))}
         </div>
       )}
+
+      <SellDialog entry={selling} onClose={() => setSelling(null)} onSold={onSold} />
     </div>
   )
 }

@@ -33,6 +33,19 @@ export function listInventory(status: 'owned' | 'sold' | 'all' = 'owned') {
   return api<InventoryEntry[]>(`/inventory?status=${status}`)
 }
 
+/** Réponse de POST /inventory/{id}/sell. */
+export interface SaleResult {
+  inventory_item_id: string
+  item_name: string
+  /** Crédits reçus. */
+  amount: number
+  balance_after: number
+}
+
+export function sellItem(inventoryItemId: string) {
+  return api<SaleResult>(`/inventory/${encodeURIComponent(inventoryItemId)}/sell`, { method: 'POST' })
+}
+
 const dateTime = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
 
 export function formatDateTime(iso: string) {

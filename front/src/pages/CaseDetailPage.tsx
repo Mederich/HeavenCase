@@ -234,6 +234,7 @@ export function CaseDetailPage() {
         open={resultOpen}
         onOpenChange={setResultOpen}
         price={data.price}
+        onSold={() => void refresh()}
         onOpenAgain={user && data.is_openable && missing === 0 ? handleOpen : null}
       />
     </div>
