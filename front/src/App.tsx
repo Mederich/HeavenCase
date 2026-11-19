@@ -2,8 +2,10 @@ import { BrowserRouter, Outlet, Route, Routes } from 'react-router'
 import { AuthProvider } from './auth/AuthProvider'
 import { Header } from './components/Header'
 import { AuthPage } from './pages/AuthPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { HomePage } from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { VerifyEmailPage } from './pages/VerifyEmailPage'
 
 function Layout() {
@@ -26,8 +28,10 @@ function App() {
             <Route index element={<HomePage />} />
             <Route path="connexion" element={<AuthPage mode="login" />} />
             <Route path="inscription" element={<AuthPage mode="register" />} />
-            {/* Chemin fixé par le lien envoyé par mail (APP_URL = URL du front) */}
+            <Route path="mot-de-passe-oublie" element={<ForgotPasswordPage />} />
+            {/* Chemins fixés par les liens envoyés par mail (APP_URL = URL du front) */}
             <Route path="auth/verify" element={<VerifyEmailPage />} />
+            <Route path="reset-password" element={<ResetPasswordPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
