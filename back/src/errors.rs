@@ -5,7 +5,10 @@ use axum::{
 };
 use serde_json::json;
 
+#[derive(Debug)]
 pub enum AppError {
+    BadRequest(String),
+    Unauthorized(String),
     NotFound(String),
     /// Erreur inattendue : le détail est loggé, le client reçoit un message générique.
     Internal(String),
@@ -14,6 +17,8 @@ pub enum AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, msg) = match self {
+            AppError::BadRequest(m) => (StatusCode::BAD_REQUEST, m),
+            AppError::Unauthorized(m) => (StatusCode::UNAUTHORIZED, m),
             AppError::NotFound(m) => (StatusCode::NOT_FOUND, m),
             AppError::Internal(detail) => {
                 tracing::error!("{detail}");

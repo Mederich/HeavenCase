@@ -1,11 +1,12 @@
 mod auth;
 mod cases;
+mod fair;
 mod users;
 
 use crate::state::AppState;
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::routing::{get, post};
+use axum::routing::{get, post, put};
 use axum::{Json, Router};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -19,11 +20,16 @@ use utoipa_swagger_ui::SwaggerUi;
         auth::login,
         cases::list,
         cases::detail,
+        fair::get_seeds,
+        fair::set_client_seed,
+        fair::rotate,
+        fair::verify,
     ),
     tags(
         (name = "health", description = "État du service"),
         (name = "auth", description = "Inscription et connexion"),
-        (name = "cases", description = "Catalogue de caisses")
+        (name = "cases", description = "Catalogue de caisses"),
+        (name = "fair", description = "Preuve d'équité (provably fair)")
     )
 )]
 pub struct ApiDoc;
@@ -38,6 +44,10 @@ pub fn router() -> Router<AppState> {
         .route("/auth/login", post(auth::login))
         .route("/cases", get(cases::list))
         .route("/cases/{slug}", get(cases::detail))
+        .route("/fair/seeds", get(fair::get_seeds))
+        .route("/fair/client-seed", put(fair::set_client_seed))
+        .route("/fair/rotate", post(fair::rotate))
+        .route("/fair/verify", get(fair::verify))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
 }
 
