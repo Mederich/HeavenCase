@@ -1,4 +1,5 @@
 mod auth;
+mod cases;
 mod users;
 
 use crate::state::AppState;
@@ -11,10 +12,17 @@ use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(db_health, auth::register, auth::verify_email, auth::login),
+    paths(
+        db_health,
+        auth::register,
+        auth::verify_email,
+        auth::login,
+        cases::list,
+    ),
     tags(
         (name = "health", description = "État du service"),
-        (name = "auth", description = "Inscription et connexion")
+        (name = "auth", description = "Inscription et connexion"),
+        (name = "cases", description = "Catalogue de caisses")
     )
 )]
 pub struct ApiDoc;
@@ -27,6 +35,7 @@ pub fn router() -> Router<AppState> {
         .route("/auth/register", post(auth::register))
         .route("/auth/verify", get(auth::verify_email))
         .route("/auth/login", post(auth::login))
+        .route("/cases", get(cases::list))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
 }
 

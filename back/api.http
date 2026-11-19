@@ -23,3 +23,6 @@ POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 { "email": "leo@test.com", "password": "motdepasse123" }
+###
+
+GET http://localhost:3000/cases

@@ -1,3 +1,4 @@
+mod catalog;
 mod errors;
 mod mailer;
 mod routes;
