@@ -29,8 +29,7 @@ export function Header() {
 
         <nav className="hidden items-center gap-5 text-sm sm:flex" aria-label="Navigation principale">
           <NavLink
-            to="/"
-            end
+            to="/cases"
             className={({ isActive }) => (isActive ? 'text-gold-300' : 'text-muted-foreground hover:text-foreground')}
           >
             Caisses
