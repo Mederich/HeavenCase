@@ -1,6 +1,7 @@
 mod auth;
 mod cases;
 mod fair;
+mod openings;
 mod users;
 
 use crate::state::AppState;
@@ -20,10 +21,12 @@ use utoipa_swagger_ui::SwaggerUi;
         auth::login,
         cases::list,
         cases::detail,
+        cases::open,
         fair::get_seeds,
         fair::set_client_seed,
         fair::rotate,
         fair::verify,
+        openings::history,
     ),
     tags(
         (name = "health", description = "État du service"),
@@ -44,10 +47,12 @@ pub fn router() -> Router<AppState> {
         .route("/auth/login", post(auth::login))
         .route("/cases", get(cases::list))
         .route("/cases/{slug}", get(cases::detail))
+        .route("/cases/{slug}/open", post(cases::open))
         .route("/fair/seeds", get(fair::get_seeds))
         .route("/fair/client-seed", put(fair::set_client_seed))
         .route("/fair/rotate", post(fair::rotate))
         .route("/fair/verify", get(fair::verify))
+        .route("/openings", get(openings::history))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
 }
 

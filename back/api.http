@@ -49,3 +49,11 @@ POST http://localhost:3000/fair/rotate
 ###
 
 GET http://localhost:3000/fair/verify?server_seed=server-seed&client_seed=client-seed&nonce=0&case=aube
+
+###
+
+POST http://localhost:3000/cases/aube/open
+
+###
+
+GET http://localhost:3000/openings?limit=10

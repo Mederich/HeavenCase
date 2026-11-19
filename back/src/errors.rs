@@ -9,7 +9,11 @@ use serde_json::json;
 pub enum AppError {
     BadRequest(String),
     Unauthorized(String),
+    /// Solde insuffisant pour l'achat demandé.
+    PaymentRequired(String),
+    Forbidden(String),
     NotFound(String),
+    Conflict(String),
     /// Erreur inattendue : le détail est loggé, le client reçoit un message générique.
     Internal(String),
 }
@@ -19,7 +23,10 @@ impl IntoResponse for AppError {
         let (status, msg) = match self {
             AppError::BadRequest(m) => (StatusCode::BAD_REQUEST, m),
             AppError::Unauthorized(m) => (StatusCode::UNAUTHORIZED, m),
+            AppError::PaymentRequired(m) => (StatusCode::PAYMENT_REQUIRED, m),
+            AppError::Forbidden(m) => (StatusCode::FORBIDDEN, m),
             AppError::NotFound(m) => (StatusCode::NOT_FOUND, m),
+            AppError::Conflict(m) => (StatusCode::CONFLICT, m),
             AppError::Internal(detail) => {
                 tracing::error!("{detail}");
                 (

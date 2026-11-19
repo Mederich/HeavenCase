@@ -68,14 +68,17 @@ pub struct CaseDetail {
 }
 
 /// Caisse active par son slug.
-pub async fn find_case(pool: &PgPool, slug: &str) -> Result<Option<CaseSummary>, sqlx::Error> {
+pub async fn find_case<'e, E>(executor: E, slug: &str) -> Result<Option<CaseSummary>, sqlx::Error>
+where
+    E: sqlx::PgExecutor<'e>,
+{
     sqlx::query_as(
         "SELECT id, name, slug, image_url, description, price
          FROM cases
          WHERE slug = $1 AND is_active",
     )
     .bind(slug)
-    .fetch_optional(pool)
+    .fetch_optional(executor)
     .await
 }
 
