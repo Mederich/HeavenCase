@@ -15,8 +15,8 @@ interface OpeningResultDialogProps {
   /** null : bouton masqué (solde insuffisant ou caisse indisponible). */
   onOpenAgain: (() => void) | null
   price: number
-  /** Appelé après la revente du skin gagné. */
-  onSold: () => void
+  /** Appelé avec le nouveau solde après la revente du skin gagné. */
+  onSold: (balance: number) => void
 }
 
 export function OpeningResultDialog(props: OpeningResultDialogProps) {
@@ -45,7 +45,7 @@ function ResultDialog({
       const done = await sellItem(result.inventory_item_id)
       setSale('sold')
       toast.success(`${done.item_name} vendu : +${formatCredits(done.amount)}`)
-      onSold()
+      onSold(done.balance_after)
     } catch (err) {
       setSale('idle')
       toastError(err, 'Vente impossible.')

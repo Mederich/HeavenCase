@@ -79,7 +79,7 @@ export function TransactionsPanel() {
                 <TableCell
                   className={cn(
                     'text-right font-semibold whitespace-nowrap tabular-nums',
-                    t.amount > 0 ? 'text-emerald-400' : 'text-foreground',
+                    t.amount > 0 ? 'text-success' : 'text-foreground',
                   )}
                 >
                   {credits.format(t.amount)}

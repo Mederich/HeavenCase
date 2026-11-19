@@ -3,6 +3,7 @@ import { useAuth } from '@/auth/useAuth'
 import { InventoryPanel } from '@/components/profile/InventoryPanel'
 import { TransactionsPanel } from '@/components/profile/TransactionsPanel'
 import { Skeleton } from '@/components/ui/skeleton'
+import { formatCredits } from '@/lib/cases'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 type Tab = 'inventory' | 'history'
@@ -28,8 +29,16 @@ export function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-      <h1 className="font-display text-3xl font-bold text-gold-gradient">{user.username}</h1>
-      {user.email && <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>}
+      <div className="flex flex-wrap items-end justify-between gap-6">
+        <div className="min-w-0">
+          <h1 className="truncate font-display text-3xl font-bold text-gold-gradient">{user.username}</h1>
+          {user.email && <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>}
+        </div>
+        <div className="rounded-xl border bg-card px-5 py-3">
+          <p className="text-xs text-muted-foreground">Solde</p>
+          <p className="text-2xl font-bold tabular-nums text-gold-300">{formatCredits(user.balance)}</p>
+        </div>
+      </div>
 
       <Tabs value={tab} onValueChange={selectTab} className="mt-8">
         <TabsList>

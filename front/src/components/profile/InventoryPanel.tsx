@@ -53,7 +53,7 @@ export function InventoryPanel() {
   const [result, setResult] = useState<{ status: StatusFilter; items: InventoryEntry[] } | null>(null)
   const [failed, setFailed] = useState(false)
   const [selling, setSelling] = useState<InventoryEntry | null>(null)
-  const { refresh } = useAuth()
+  const { setBalance } = useAuth()
 
   useEffect(() => {
     let active = true
@@ -82,7 +82,7 @@ export function InventoryPanel() {
           : current.items.map((i) => (i.id === sale.inventory_item_id ? { ...i, status: 'sold' as const } : i))
       return { ...current, items }
     })
-    void refresh()
+    setBalance(sale.balance_after)
   }
 
   const items = result?.status === status ? result.items : null
