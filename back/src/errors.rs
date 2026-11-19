@@ -22,6 +22,8 @@ pub enum AppError {
     Forbidden(String),
     NotFound(String),
     Conflict(String),
+    /// Service externe (paiement) indisponible : détail loggé, message générique au client.
+    Unavailable(String),
     /// Erreur inattendue : le détail est loggé, le client reçoit un message générique.
     Internal(String),
 }
@@ -35,6 +37,14 @@ impl IntoResponse for AppError {
             AppError::Forbidden(m) => (StatusCode::FORBIDDEN, m),
             AppError::NotFound(m) => (StatusCode::NOT_FOUND, m),
             AppError::Conflict(m) => (StatusCode::CONFLICT, m),
+            AppError::Unavailable(detail) => {
+                tracing::error!("{detail}");
+                (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Le paiement est momentanément indisponible, réessaie dans quelques minutes"
+                        .to_string(),
+                )
+            }
             AppError::Internal(detail) => {
                 tracing::error!("{detail}");
                 (

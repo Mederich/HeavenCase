@@ -48,6 +48,7 @@ pub struct CheckoutRequest {
         (status = 401, description = "Non connecté"),
         (status = 403, description = "Compte non activé (âge ou CGU)"),
         (status = 409, description = "Dépôt non configuré"),
+        (status = 503, description = "Stripe indisponible ou a refusé la session"),
     )
 )]
 pub async fn checkout(

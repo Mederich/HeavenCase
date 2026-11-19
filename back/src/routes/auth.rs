@@ -28,7 +28,7 @@ fn plain(e: AppError) -> ApiError {
         AppError::Forbidden(m) => (StatusCode::FORBIDDEN, m),
         AppError::NotFound(m) => (StatusCode::NOT_FOUND, m),
         AppError::Conflict(m) => (StatusCode::CONFLICT, m),
-        AppError::Internal(m) => internal(m),
+        AppError::Unavailable(m) | AppError::Internal(m) => internal(m),
     }
 }
 

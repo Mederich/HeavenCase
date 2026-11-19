@@ -147,7 +147,7 @@ pub async fn start_checkout(
         .form(&form)
         .send()
         .await
-        .map_err(|e| AppError::Internal(format!("Stripe injoignable : {e}")))?;
+        .map_err(|e| AppError::Unavailable(format!("Stripe injoignable : {e}")))?;
     if !response.status().is_success() {
         let status = response.status();
         let body = response.text().await.unwrap_or_default();
@@ -158,10 +158,10 @@ pub async fn start_checkout(
     let session: CheckoutSession = response
         .json()
         .await
-        .map_err(|e| AppError::Internal(format!("réponse Stripe illisible : {e}")))?;
+        .map_err(|e| AppError::Unavailable(format!("réponse Stripe illisible : {e}")))?;
     let checkout_url = session
         .url
-        .ok_or_else(|| AppError::Internal("session Stripe sans URL".into()))?;
+        .ok_or_else(|| AppError::Unavailable("session Stripe sans URL".into()))?;
 
     sqlx::query(
         "INSERT INTO payments (id, user_id, provider, provider_tx_id, amount, credits, currency, status)
