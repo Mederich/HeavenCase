@@ -8,7 +8,7 @@ use utoipa::{IntoParams, ToSchema};
 use crate::{
     auth_user::AuthUser,
     catalog::{self, LootEntry},
-    errors::AppError,
+    errors::{AppError, ErrorBody},
     fair,
     seeds::{self, RotateResult, SeedStatus},
     state::AppState,
@@ -18,9 +18,10 @@ use crate::{
     get,
     path = "/fair/seeds",
     tag = "fair",
+    security(("session" = [])),
     responses(
         (status = 200, description = "Empreinte de la server seed active, client seed et prochain nonce", body = SeedStatus),
-        (status = 401, description = "Non connecté"),
+        (status = 401, description = "Non connecté", body = ErrorBody),
     )
 )]
 pub async fn get_seeds(
@@ -39,11 +40,12 @@ pub struct ClientSeedRequest {
     put,
     path = "/fair/client-seed",
     tag = "fair",
+    security(("session" = [])),
     request_body = ClientSeedRequest,
     responses(
         (status = 200, description = "Client seed mise à jour", body = SeedStatus),
-        (status = 400, description = "Client seed invalide"),
-        (status = 401, description = "Non connecté"),
+        (status = 400, description = "Client seed invalide", body = ErrorBody),
+        (status = 401, description = "Non connecté", body = ErrorBody),
     )
 )]
 pub async fn set_client_seed(
@@ -60,9 +62,10 @@ pub async fn set_client_seed(
     post,
     path = "/fair/rotate",
     tag = "fair",
+    security(("session" = [])),
     responses(
         (status = 200, description = "Ancienne server seed révélée, nouvelle seed active", body = RotateResult),
-        (status = 401, description = "Non connecté"),
+        (status = 401, description = "Non connecté", body = ErrorBody),
     )
 )]
 pub async fn rotate(
@@ -99,8 +102,8 @@ pub struct VerifyResponse {
     params(VerifyQuery),
     responses(
         (status = 200, description = "Recalcul du tirage", body = VerifyResponse),
-        (status = 400, description = "Nonce négatif"),
-        (status = 404, description = "Caisse introuvable"),
+        (status = 400, description = "Nonce négatif", body = ErrorBody),
+        (status = 404, description = "Caisse introuvable", body = ErrorBody),
     )
 )]
 pub async fn verify(

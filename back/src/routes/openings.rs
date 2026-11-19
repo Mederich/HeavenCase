@@ -7,7 +7,7 @@ use utoipa::IntoParams;
 
 use crate::{
     auth_user::AuthUser,
-    errors::AppError,
+    errors::{AppError, ErrorBody},
     opening::{self, OpeningHistoryEntry},
     state::AppState,
 };
@@ -22,10 +22,11 @@ pub struct HistoryQuery {
     get,
     path = "/openings",
     tag = "fair",
+    security(("session" = [])),
     params(HistoryQuery),
     responses(
         (status = 200, description = "Dernières ouvertures du joueur, avec la server seed une fois révélée", body = Vec<OpeningHistoryEntry>),
-        (status = 401, description = "Non connecté"),
+        (status = 401, description = "Non connecté", body = ErrorBody),
     )
 )]
 pub async fn history(
