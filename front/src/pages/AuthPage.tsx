@@ -213,7 +213,10 @@ function RegisterForm() {
 
 export function AuthPage({ mode }: { mode: Mode }) {
   const { user } = useAuth()
-  if (user) return <Navigate to="/" replace />
+  const location = useLocation()
+  // Une fois connecté, retour à la page qui a demandé la connexion (ex. une caisse).
+  const from = (location.state as { from?: string } | null)?.from
+  if (user) return <Navigate to={from ?? '/'} replace />
 
   return (
     <AuthLayout

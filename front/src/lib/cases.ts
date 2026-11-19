@@ -106,3 +106,22 @@ export function chestTint(price: number): string {
   if (price <= 5000) return 'hue-rotate-[270deg] saturate-150'
   return 'hue-rotate-[310deg] saturate-150'
 }
+
+/** Réponse de POST /cases/{slug}/open : le tirage est déjà enregistré côté serveur. */
+export interface OpeningResult {
+  opening_id: string
+  case_slug: string
+  item: LootEntry
+  inventory_item_id: string
+  /** Ticket tiré, entre 0 et 99 999. */
+  ticket: number
+  nonce: number
+  server_seed_hash: string
+  client_seed: string
+  price_paid: number
+  balance_after: number
+}
+
+export function openCase(slug: string) {
+  return api<OpeningResult>(`/cases/${encodeURIComponent(slug)}/open`, { method: 'POST' })
+}
