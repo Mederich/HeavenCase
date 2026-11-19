@@ -270,6 +270,66 @@ pub async fn login(
     }))
 }
 
+// ---------- Session courante ----------
+
+#[derive(Serialize, ToSchema, sqlx::FromRow)]
+pub struct MeResponse {
+    pub id: Uuid,
+    pub username: String,
+    pub email: Option<String>,
+    /// Solde en crédits.
+    pub balance: i64,
+}
+
+#[utoipa::path(
+    get,
+    path = "/auth/me",
+    tag = "auth",
+    responses(
+        (status = 200, description = "Joueur connecté", body = MeResponse),
+        (status = 401, description = "Pas de session valide"),
+    )
+)]
+pub async fn me(
+    State(state): State<AppState>,
+    session: Session,
+) -> Result<Json<MeResponse>, ApiError> {
+    let unauthorized = || (StatusCode::UNAUTHORIZED, "Non connecté".to_string());
+
+    let Some(user_id) = session.get::<Uuid>("user_id").await.map_err(internal)? else {
+        return Err(unauthorized());
+    };
+
+    let user: Option<MeResponse> = sqlx::query_as(
+        "SELECT id, username, email, balance FROM users
+         WHERE id = $1 AND banned_at IS NULL",
+    )
+    .bind(user_id)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(internal)?;
+
+    match user {
+        Some(user) => Ok(Json(user)),
+        None => {
+            // Compte supprimé ou suspendu depuis la connexion : on coupe la session.
+            session.flush().await.map_err(internal)?;
+            Err(unauthorized())
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth/logout",
+    tag = "auth",
+    responses((status = 204, description = "Session supprimée"))
+)]
+pub async fn logout(session: Session) -> Result<StatusCode, ApiError> {
+    session.flush().await.map_err(internal)?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
 fn new_token() -> (String, String) {
     let mut bytes = [0u8; 32];
     OsRng.fill_bytes(&mut bytes);

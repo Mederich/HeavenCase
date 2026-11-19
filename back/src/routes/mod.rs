@@ -11,7 +11,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(db_health, auth::register, auth::verify_email, auth::login, auth::forgot_password, auth::reset_password, users::get_user),
+    paths(db_health, auth::register, auth::verify_email, auth::login, auth::me, auth::logout, auth::forgot_password, auth::reset_password, users::get_user),
     tags(
         (name = "health", description = "État du service"),
         (name = "auth", description = "Inscription et connexion"),
@@ -28,6 +28,8 @@ pub fn router() -> Router<AppState> {
         .route("/auth/register", post(auth::register))
         .route("/auth/verify", get(auth::verify_email))
         .route("/auth/login", post(auth::login))
+        .route("/auth/me", get(auth::me))
+        .route("/auth/logout", post(auth::logout))
         .route("/auth/forgot-password", post(auth::forgot_password))
         .route("/auth/reset-password", post(auth::reset_password))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))

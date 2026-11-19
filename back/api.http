@@ -34,3 +34,10 @@ Content-Type: application/json
 
 ###
 GET http://localhost:3000/users/243f29a8-a92c-4f0a-ac99-652215a37e66
+###
+
+GET http://localhost:3000/auth/me
+
+###
+
+POST http://localhost:3000/auth/logout
