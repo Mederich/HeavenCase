@@ -139,8 +139,7 @@ function RegisterForm() {
     return (
       <div className="space-y-5">
         <SuccessAlert>
-          Compte créé ! Un lien de validation a été envoyé à <strong className="font-semibold">{done}</strong>. Clique
-          dessus pour activer ton compte, puis connecte-toi.
+          Compte créé. Lien de validation envoyé à <strong className="font-semibold">{done}</strong>.
         </SuccessAlert>
         <Button asChild size="lg" className="h-10 w-full">
           <Link to="/login">Aller à la connexion</Link>
@@ -220,12 +219,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
 
   return (
     <AuthLayout
-      title={mode === 'register' ? 'Rejoignez la communauté' : 'Bon retour parmi nous'}
-      subtitle={
-        mode === 'register'
-          ? 'Crée ton compte pour ouvrir des caisses CS2 et collectionner des skins.'
-          : 'Connecte-toi pour retrouver ton solde et ton inventaire.'
-      }
+      title={mode === 'register' ? 'Rejoignez la communauté' : 'Connexion'}
     >
       <AuthTabs mode={mode} />
       {mode === 'register' ? <RegisterForm /> : <LoginForm />}

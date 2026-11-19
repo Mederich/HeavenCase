@@ -3,6 +3,16 @@ import { api } from './api'
 
 export type Rarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic'
 
+export type Exterior = 'FN' | 'MW' | 'FT' | 'WW' | 'BS'
+
+export const exteriorLabel: Record<Exterior, string> = {
+  FN: 'Factory New',
+  MW: 'Minimal Wear',
+  FT: 'Field-Tested',
+  WW: 'Well-Worn',
+  BS: 'Battle-Scarred',
+}
+
 export interface CaseSummary {
   id: string
   name: string
@@ -11,6 +21,8 @@ export interface CaseSummary {
   description: string | null
   /** Prix en crédits. */
   price: number
+  category_name: string | null
+  category_slug: string | null
 }
 
 export interface LootEntry {
@@ -20,6 +32,9 @@ export interface LootEntry {
   rarity: Rarity
   /** Valeur en crédits. */
   value: number
+  /** Usure : FN, MW, FT, WW ou BS. */
+  exterior: Exterior | null
+  stattrak: boolean
   /** Poids en millièmes de pourcent (100 000 = 100 %). */
   drop_weight: number
   /** Probabilité en pourcent. */

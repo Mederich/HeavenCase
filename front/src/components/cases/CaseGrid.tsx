@@ -25,7 +25,7 @@ export function CaseGrid() {
   }, [])
 
   if (failed) {
-    return <p className="text-sm text-muted-foreground">Le catalogue est indisponible pour le moment.</p>
+    return <p className="text-sm text-muted-foreground">Catalogue indisponible.</p>
   }
 
   if (!cases) {
@@ -39,13 +39,28 @@ export function CaseGrid() {
   }
 
   if (cases.length === 0) {
-    return <p className="text-sm text-muted-foreground">Aucune caisse disponible pour le moment.</p>
+    return <p className="text-sm text-muted-foreground">Aucune caisse disponible.</p>
+  }
+
+  const sections: { name: string; cases: CaseSummary[] }[] = []
+  for (const c of cases) {
+    const name = c.category_name ?? 'Autres'
+    const section = sections.find((s) => s.name === name)
+    if (section) section.cases.push(c)
+    else sections.push({ name, cases: [c] })
   }
 
   return (
-    <div className={grid}>
-      {cases.map((c) => (
-        <CaseCard key={c.id} item={c} />
+    <div className="space-y-10">
+      {sections.map((section) => (
+        <section key={section.name} aria-label={section.name}>
+          <h2 className="mb-4 font-display text-xl font-bold text-foreground">{section.name}</h2>
+          <div className={grid}>
+            {section.cases.map((c) => (
+              <CaseCard key={c.id} item={c} />
+            ))}
+          </div>
+        </section>
       ))}
     </div>
   )
