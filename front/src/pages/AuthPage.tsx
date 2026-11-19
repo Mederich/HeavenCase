@@ -223,7 +223,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
       title={mode === 'register' ? 'Rejoignez la communauté' : 'Bon retour parmi nous'}
       subtitle={
         mode === 'register'
-          ? 'Crée ton compte pour ouvrir des caisses célestes et constituer ton inventaire.'
+          ? 'Crée ton compte pour ouvrir des caisses CS2 et collectionner des skins.'
           : 'Connecte-toi pour retrouver ton solde et ton inventaire.'
       }
     >

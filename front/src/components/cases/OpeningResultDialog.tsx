@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { formatCredits, rarityMeta, type OpeningResult } from '@/lib/cases'
 import { cn } from '@/lib/utils'
-import { ItemVisual } from './ItemCard'
+import { ItemVisual, SkinName } from './ItemCard'
 
 interface OpeningResultDialogProps {
   result: OpeningResult | null
@@ -23,15 +23,15 @@ export function OpeningResultDialog({ result, open, onOpenChange, onOpenAgain, p
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="items-center text-center">
           <DialogTitle className="font-display text-2xl text-gold-gradient">Félicitations !</DialogTitle>
-          <DialogDescription>L’objet a été ajouté à ton inventaire.</DialogDescription>
+          <DialogDescription>Le skin a été ajouté à ton inventaire.</DialogDescription>
         </DialogHeader>
 
         <div className={cn('rounded-xl border-2 bg-card', meta.border)}>
           <ItemVisual item={item} className="aspect-[16/9] w-full" />
           <div className="space-y-1 p-4 text-center">
             <p className={cn('text-xs font-semibold tracking-wide uppercase', meta.text)}>{meta.label}</p>
-            <p className="font-display text-xl font-bold text-foreground">{item.name}</p>
-            <p className={cn('text-lg font-semibold tabular-nums', meta.text)}>{formatCredits(item.value)}</p>
+            <SkinName name={item.name} className="[&>p:last-child]:font-display [&>p:last-child]:text-xl" />
+            <p className="text-lg font-semibold tabular-nums text-gold-300">{formatCredits(item.value)}</p>
           </div>
         </div>
 

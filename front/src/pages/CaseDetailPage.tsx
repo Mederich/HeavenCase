@@ -172,7 +172,7 @@ export function CaseDetailPage() {
             {data.description && <p className="text-sm text-muted-foreground">{data.description}</p>}
             <dl className="space-y-2 text-sm">
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Objets dans la caisse</dt>
+                <dt className="text-muted-foreground">Skins dans la caisse</dt>
                 <dd className="font-medium tabular-nums">{data.items.length}</dd>
               </div>
               {values.length > 0 && (

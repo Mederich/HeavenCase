@@ -54,42 +54,53 @@ export function formatProbability(probability: number) {
   return `${percent.format(probability)} %`
 }
 
+/**
+ * Grades CS2 associés aux raretés de l'API : common = Mil-Spec,
+ * rare = Restricted, epic = Classified, legendary = Covert,
+ * mythic = ★ (couteaux et gants).
+ */
 export const rarityMeta: Record<Rarity, { label: string; text: string; border: string; glow: string; bg: string }> = {
   common: {
-    label: 'Commun',
-    text: 'text-slate-300',
-    border: 'border-slate-400/40',
-    glow: 'from-slate-400/25',
-    bg: 'bg-slate-400/10',
+    label: 'Mil-Spec',
+    text: 'text-grade-milspec',
+    border: 'border-grade-milspec/60',
+    glow: 'from-grade-milspec/30',
+    bg: 'bg-grade-milspec/15',
   },
   rare: {
-    label: 'Rare',
-    text: 'text-sky-300',
-    border: 'border-sky-400/50',
-    glow: 'from-sky-500/30',
-    bg: 'bg-sky-500/10',
+    label: 'Restricted',
+    text: 'text-grade-restricted',
+    border: 'border-grade-restricted/60',
+    glow: 'from-grade-restricted/35',
+    bg: 'bg-grade-restricted/15',
   },
   epic: {
-    label: 'Épique',
-    text: 'text-violet-300',
-    border: 'border-violet-400/50',
-    glow: 'from-violet-500/35',
-    bg: 'bg-violet-500/10',
+    label: 'Classified',
+    text: 'text-grade-classified',
+    border: 'border-grade-classified/60',
+    glow: 'from-grade-classified/35',
+    bg: 'bg-grade-classified/15',
   },
   legendary: {
-    label: 'Légendaire',
-    text: 'text-gold-300',
-    border: 'border-gold-400/60',
-    glow: 'from-gold-500/40',
-    bg: 'bg-gold-500/10',
+    label: 'Covert',
+    text: 'text-grade-covert',
+    border: 'border-grade-covert/60',
+    glow: 'from-grade-covert/40',
+    bg: 'bg-grade-covert/15',
   },
   mythic: {
-    label: 'Mythique',
-    text: 'text-rose-300',
-    border: 'border-rose-400/60',
-    glow: 'from-rose-500/40',
-    bg: 'bg-rose-500/10',
+    label: '★ Rare Special',
+    text: 'text-grade-special',
+    border: 'border-grade-special/70',
+    glow: 'from-grade-special/45',
+    bg: 'bg-grade-special/15',
   },
+}
+
+/** Sépare « AK-47 | Redline » en arme et nom du skin. */
+export function splitSkinName(name: string): { weapon: string; skin: string | null } {
+  const [weapon, ...rest] = name.split(' | ')
+  return { weapon, skin: rest.length ? rest.join(' | ') : null }
 }
 
 /**

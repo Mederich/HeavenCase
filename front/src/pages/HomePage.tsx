@@ -19,10 +19,10 @@ export function HomePage() {
         <div className="absolute inset-x-0 bottom-0 -z-10 h-24 bg-gradient-to-t from-background to-transparent" />
         <div className="mx-auto flex min-h-[28rem] max-w-7xl flex-col justify-center px-4 py-16 sm:px-6">
           <h1 className="max-w-xl font-display text-4xl font-bold leading-tight text-gold-gradient sm:text-5xl">
-            Ouvrez des caisses et découvrez des objets divins
+            Ouvrez des caisses CS2 et découvrez des skins divins
           </h1>
           <p className="mt-4 max-w-md text-base text-muted-foreground">
-            Des caisses aux probabilités affichées et des tirages que tu peux vérifier toi-même.
+            Des caisses de skins CS2, des probabilités affichées et des tirages que tu peux vérifier toi-même.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             {user ? (
