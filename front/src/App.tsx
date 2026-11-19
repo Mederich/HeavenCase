@@ -27,9 +27,9 @@ function App() {
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
-            <Route path="connexion" element={<AuthPage mode="login" />} />
-            <Route path="inscription" element={<AuthPage mode="register" />} />
-            <Route path="mot-de-passe-oublie" element={<ForgotPasswordPage />} />
+            <Route path="login" element={<AuthPage mode="login" />} />
+            <Route path="register" element={<AuthPage mode="register" />} />
+            <Route path="forgot-password" element={<ForgotPasswordPage />} />
             {/* Chemins fixés par les liens envoyés par mail (APP_URL = URL du front) */}
             <Route path="auth/verify" element={<VerifyEmailPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />

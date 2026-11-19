@@ -14,7 +14,7 @@ type Mode = 'login' | 'register'
 
 const MIN_PASSWORD = 8
 
-const routes: Record<Mode, string> = { register: '/inscription', login: '/connexion' }
+const routes: Record<Mode, string> = { register: '/register', login: '/login' }
 
 function AuthTabs({ mode }: { mode: Mode }) {
   const navigate = useNavigate()
@@ -75,7 +75,7 @@ function LoginForm() {
       />
       <div className="text-right">
         <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs text-muted-foreground hover:text-gold-300">
-          <Link to="/mot-de-passe-oublie">Mot de passe oublié ?</Link>
+          <Link to="/forgot-password">Mot de passe oublié ?</Link>
         </Button>
       </div>
       <Button type="submit" size="lg" className="h-10 w-full" disabled={pending || !email || !password}>
@@ -83,7 +83,7 @@ function LoginForm() {
       </Button>
       <p className="text-center text-sm text-muted-foreground">
         Pas encore de compte ?{' '}
-        <Link to="/inscription" className="font-medium text-gold-300 hover:underline">
+        <Link to="/register" className="font-medium text-gold-300 hover:underline">
           Créer un compte
         </Link>
       </p>
@@ -143,7 +143,7 @@ function RegisterForm() {
           dessus pour activer ton compte, puis connecte-toi.
         </SuccessAlert>
         <Button asChild size="lg" className="h-10 w-full">
-          <Link to="/connexion">Aller à la connexion</Link>
+          <Link to="/login">Aller à la connexion</Link>
         </Button>
       </div>
     )
@@ -203,7 +203,7 @@ function RegisterForm() {
       </Button>
       <p className="text-center text-sm text-muted-foreground">
         Déjà un compte ?{' '}
-        <Link to="/connexion" className="font-medium text-gold-300 hover:underline">
+        <Link to="/login" className="font-medium text-gold-300 hover:underline">
           Se connecter
         </Link>
       </p>

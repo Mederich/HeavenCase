@@ -39,7 +39,7 @@ export function VerifyEmailPage() {
         <div className="space-y-5">
           <SuccessAlert>Ton adresse email est validée. Tu peux maintenant te connecter.</SuccessAlert>
           <Button asChild size="lg" className="h-10 w-full">
-            <Link to="/connexion">Se connecter</Link>
+            <Link to="/login">Se connecter</Link>
           </Button>
         </div>
       )}
@@ -49,7 +49,7 @@ export function VerifyEmailPage() {
             Le lien a peut-être expiré ou déjà servi. Si ton compte est déjà validé, connecte-toi directement.
           </p>
           <Button asChild size="lg" className="h-10 w-full">
-            <Link to="/connexion">Aller à la connexion</Link>
+            <Link to="/login">Aller à la connexion</Link>
           </Button>
         </div>
       )}

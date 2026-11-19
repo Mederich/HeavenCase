@@ -43,10 +43,10 @@ export function Header() {
           {user === null && (
             <>
               <Button asChild variant="outline" size="lg" className="border-gold-500/70 text-gold-300 dark:border-gold-500/70 dark:bg-transparent dark:hover:bg-gold-500/10">
-                <Link to="/connexion">Se connecter</Link>
+                <Link to="/login">Se connecter</Link>
               </Button>
               <Button asChild size="lg">
-                <Link to="/inscription">S’inscrire</Link>
+                <Link to="/register">S’inscrire</Link>
               </Button>
             </>
           )}

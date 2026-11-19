@@ -25,7 +25,7 @@ export function HomePage() {
             </p>
           ) : (
             <Button asChild size="lg" className="h-11 px-6">
-              <Link to="/inscription">Commencer maintenant</Link>
+              <Link to="/register">Commencer maintenant</Link>
             </Button>
           )}
         </div>

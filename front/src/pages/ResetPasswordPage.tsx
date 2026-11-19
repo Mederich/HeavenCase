@@ -51,14 +51,14 @@ export function ResetPasswordPage() {
         <div className="space-y-5">
           <p className="text-sm text-muted-foreground">Ouvre le lien reçu par mail en entier, ou demandes-en un nouveau.</p>
           <Button asChild size="lg" className="h-10 w-full">
-            <Link to="/mot-de-passe-oublie">Demander un nouveau lien</Link>
+            <Link to="/forgot-password">Demander un nouveau lien</Link>
           </Button>
         </div>
       ) : done ? (
         <div className="space-y-5">
           <SuccessAlert>Ton mot de passe a été modifié.</SuccessAlert>
           <Button asChild size="lg" className="h-10 w-full">
-            <Link to="/connexion">Se connecter</Link>
+            <Link to="/login">Se connecter</Link>
           </Button>
         </div>
       ) : (
@@ -86,7 +86,7 @@ export function ResetPasswordPage() {
           {failed && (
             <p className="text-center text-sm text-muted-foreground">
               Lien expiré ?{' '}
-              <Link to="/mot-de-passe-oublie" className="font-medium text-gold-300 hover:underline">
+              <Link to="/forgot-password" className="font-medium text-gold-300 hover:underline">
                 Demander un nouveau lien
               </Link>
             </p>

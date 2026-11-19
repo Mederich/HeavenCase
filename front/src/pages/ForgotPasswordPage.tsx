@@ -36,7 +36,7 @@ export function ForgotPasswordPage() {
             réinitialisation vient d’y être envoyé.
           </SuccessAlert>
           <Button asChild size="lg" className="h-10 w-full">
-            <Link to="/connexion">Retour à la connexion</Link>
+            <Link to="/login">Retour à la connexion</Link>
           </Button>
         </div>
       ) : (
@@ -54,7 +54,7 @@ export function ForgotPasswordPage() {
             {pending ? 'Envoi…' : 'Envoyer le lien'}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            <Link to="/connexion" className="font-medium text-gold-300 hover:underline">
+            <Link to="/login" className="font-medium text-gold-300 hover:underline">
               Retour à la connexion
             </Link>
           </p>
