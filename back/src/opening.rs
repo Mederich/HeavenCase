@@ -158,6 +158,10 @@ pub struct OpeningHistoryEntry {
     pub case_name: String,
     pub item_id: Uuid,
     pub item_name: String,
+    pub item_image_url: Option<String>,
+    /// Usure : FN, MW, FT, WW ou BS.
+    pub exterior: Option<String>,
+    pub stattrak: bool,
     pub rarity: String,
     pub item_value: i64,
     pub price_paid: i64,
@@ -179,7 +183,8 @@ pub async fn history(
 ) -> Result<Vec<OpeningHistoryEntry>, sqlx::Error> {
     sqlx::query_as(
         "SELECT o.id, c.slug AS case_slug, c.name AS case_name,
-                i.id AS item_id, i.name AS item_name, i.rarity::text AS rarity,
+                i.id AS item_id, i.name AS item_name, i.image_url AS item_image_url,
+                i.exterior, i.stattrak, i.rarity::text AS rarity,
                 o.item_value, o.price_paid, o.roll_value::bigint AS ticket, o.nonce,
                 o.server_seed_hash, o.server_seed, o.client_seed,
                 to_char(o.created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') AS created_at
@@ -223,11 +228,11 @@ mod tests {
         let user = create_user(&pool, 1_000).await;
         let before = seeds::get_status(&pool, user).await.unwrap();
 
-        let result = open_case(&pool, user, "aube").await.unwrap();
+        let result = open_case(&pool, user, "heaven").await.unwrap();
 
-        assert_eq!(result.price_paid, 100);
-        assert_eq!(result.balance_after, 900);
-        assert_eq!(balance(&pool, user).await, 900);
+        assert_eq!(result.price_paid, 150);
+        assert_eq!(result.balance_after, 850);
+        assert_eq!(balance(&pool, user).await, 850);
         assert_eq!(result.nonce, 0);
         assert_eq!(result.server_seed_hash, before.server_seed_hash);
         assert!((result.item.roll_min..=result.item.roll_max).contains(&result.ticket));
@@ -250,7 +255,7 @@ mod tests {
         .fetch_one(&pool)
         .await
         .unwrap();
-        assert_eq!((amount, after, reference), (-100, 900, result.opening_id));
+        assert_eq!((amount, after, reference), (-150, 850, result.opening_id));
 
         assert_eq!(seeds::get_status(&pool, user).await.unwrap().nonce, 1);
     }
@@ -258,9 +263,9 @@ mod tests {
     #[sqlx::test]
     async fn solde_insuffisant_ne_change_rien(pool: PgPool) {
         let user = create_user(&pool, 50).await;
-        let err = open_case(&pool, user, "aube").await.unwrap_err();
+        let err = open_case(&pool, user, "heaven").await.unwrap_err();
         match err {
-            AppError::PaymentRequired(msg) => assert!(msg.contains("50 crédits"), "{msg}"),
+            AppError::PaymentRequired(msg) => assert!(msg.contains("100 crédits"), "{msg}"),
             other => panic!("attendu PaymentRequired, reçu {other:?}"),
         }
         assert_eq!(balance(&pool, user).await, 50);
@@ -278,14 +283,15 @@ mod tests {
 
         sqlx::query(
             "UPDATE case_items SET drop_weight = drop_weight + 1
-             WHERE case_id = (SELECT id FROM cases WHERE slug = 'aube')
-               AND drop_weight = 500",
+             WHERE case_id = (SELECT id FROM cases WHERE slug = 'heaven')
+               AND drop_weight = (SELECT max(drop_weight) FROM case_items
+                                  WHERE case_id = (SELECT id FROM cases WHERE slug = 'heaven'))",
         )
         .execute(&pool)
         .await
         .unwrap();
         assert!(matches!(
-            open_case(&pool, user, "aube").await,
+            open_case(&pool, user, "heaven").await,
             Err(AppError::Conflict(_))
         ));
         assert_eq!(balance(&pool, user).await, 10_000);
@@ -300,7 +306,7 @@ mod tests {
             .await
             .unwrap();
         assert!(matches!(
-            open_case(&pool, user, "aube").await,
+            open_case(&pool, user, "heaven").await,
             Err(AppError::Forbidden(_))
         ));
         assert_eq!(balance(&pool, user).await, 1_000);
@@ -308,10 +314,10 @@ mod tests {
 
     #[sqlx::test]
     async fn ouvertures_simultanees_ne_depensent_pas_deux_fois_le_solde(pool: PgPool) {
-        let user = create_user(&pool, 150).await;
+        let user = create_user(&pool, 200).await;
         let (a, b) = tokio::join!(
-            open_case(&pool, user, "aube"),
-            open_case(&pool, user, "aube")
+            open_case(&pool, user, "heaven"),
+            open_case(&pool, user, "heaven")
         );
         assert_eq!([a.is_ok(), b.is_ok()].iter().filter(|ok| **ok).count(), 1);
         assert_eq!(balance(&pool, user).await, 50);
@@ -324,7 +330,7 @@ mod tests {
         let user = create_user(&pool, 10_000).await;
         let mut won = Vec::new();
         for _ in 0..5 {
-            won.push(open_case(&pool, user, "aube").await.unwrap());
+            won.push(open_case(&pool, user, "heaven").await.unwrap());
         }
         assert!(
             history(&pool, user, 10)
@@ -340,7 +346,7 @@ mod tests {
 
         let past = history(&pool, user, 10).await.unwrap();
         assert_eq!(past.len(), 5);
-        let case = catalog::find_case(&pool, "aube").await.unwrap().unwrap();
+        let case = catalog::find_case(&pool, "heaven").await.unwrap().unwrap();
         let table = catalog::loot_table(&pool, case.id).await.unwrap();
         for entry in &past {
             let revealed = entry.server_seed.as_deref().expect("seed révélée");
