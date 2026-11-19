@@ -170,19 +170,26 @@ mod tests {
         assert_eq!(
             slugs,
             [
-                "nuee", "aube", "celeste", "zenith", "olympe", "empyree", "divine", "pantheon"
+                "cloud",
+                "heaven",
+                "celestial",
+                "olympus",
+                "divine",
+                "empyrean",
+                "godlike",
+                "pantheon"
             ]
         );
     }
 
     #[sqlx::test]
     async fn ignore_les_caisses_inactives(pool: PgPool) {
-        sqlx::query("UPDATE cases SET is_active = false WHERE slug = 'zenith'")
+        sqlx::query("UPDATE cases SET is_active = false WHERE slug = 'olympus'")
             .execute(&pool)
             .await
             .unwrap();
         let cases = list_cases(&pool).await.unwrap();
-        assert!(cases.iter().all(|c| c.slug != "zenith"));
+        assert!(cases.iter().all(|c| c.slug != "olympus"));
     }
 
     #[sqlx::test]
@@ -196,9 +203,9 @@ mod tests {
 
     #[sqlx::test]
     async fn plages_contigues_du_plus_rare_au_plus_commun(pool: PgPool) {
-        let detail = case_detail(&pool, "aube").await.unwrap().unwrap();
+        let detail = case_detail(&pool, "heaven").await.unwrap().unwrap();
         let items = &detail.items;
-        assert_eq!(items[0].name, "Ailes de bronze");
+        assert_eq!(items[0].name, "AK-47 | Redline");
         assert_eq!((items[0].roll_min, items[0].roll_max), (0, 499));
         assert_eq!(items[0].probability, 0.5);
         assert!(detail.is_openable);
@@ -210,10 +217,10 @@ mod tests {
     #[sqlx::test]
     async fn caisse_inconnue_ou_inactive(pool: PgPool) {
         assert!(case_detail(&pool, "nexiste-pas").await.unwrap().is_none());
-        sqlx::query("UPDATE cases SET is_active = false WHERE slug = 'aube'")
+        sqlx::query("UPDATE cases SET is_active = false WHERE slug = 'heaven'")
             .execute(&pool)
             .await
             .unwrap();
-        assert!(case_detail(&pool, "aube").await.unwrap().is_none());
+        assert!(case_detail(&pool, "heaven").await.unwrap().is_none());
     }
 }
