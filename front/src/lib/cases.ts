@@ -124,12 +124,12 @@ export function splitSkinName(name: string): { weapon: string; skin: string | nu
  */
 export function chestTint(price: number): string {
   if (price <= 50) return 'grayscale-70 brightness-110'
-  if (price <= 100) return 'hue-rotate-[175deg] saturate-150'
+  if (price <= 150) return 'hue-rotate-[175deg] saturate-150'
   if (price <= 250) return 'hue-rotate-[120deg] saturate-125'
-  if (price <= 500) return ''
-  if (price <= 1000) return 'hue-rotate-[335deg] saturate-150'
-  if (price <= 2500) return 'hue-rotate-[230deg] saturate-125'
-  if (price <= 5000) return 'hue-rotate-[270deg] saturate-150'
+  if (price <= 300) return ''
+  if (price <= 500) return 'hue-rotate-[335deg] saturate-150'
+  if (price <= 1200) return 'hue-rotate-[230deg] saturate-125'
+  if (price <= 2500) return 'hue-rotate-[270deg] saturate-150'
   return 'hue-rotate-[310deg] saturate-150'
 }
 

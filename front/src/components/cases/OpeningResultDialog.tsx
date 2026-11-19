@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { formatCredits, rarityMeta, type OpeningResult } from '@/lib/cases'
+import { exteriorLabel, formatCredits, rarityMeta, type OpeningResult } from '@/lib/cases'
 import { cn } from '@/lib/utils'
 import { ItemVisual, SkinName } from './ItemCard'
 
@@ -29,8 +29,11 @@ export function OpeningResultDialog({ result, open, onOpenChange, onOpenAgain, p
         <div className={cn('rounded-xl border-2 bg-card', meta.border)}>
           <ItemVisual item={item} className="aspect-[16/9] w-full" />
           <div className="space-y-1 p-4 text-center">
-            <p className={cn('text-xs font-semibold tracking-wide uppercase', meta.text)}>{meta.label}</p>
-            <SkinName name={item.name} className="[&>p:last-child]:font-display [&>p:last-child]:text-xl" />
+            <p className={cn('text-xs font-semibold tracking-wide uppercase', meta.text)}>
+              {meta.label}
+              {item.exterior && <span className="text-muted-foreground"> · {exteriorLabel[item.exterior]}</span>}
+            </p>
+            <SkinName item={item} className="[&>p:last-child]:font-display [&>p:last-child]:text-xl" />
             <p className="text-lg font-semibold tabular-nums text-gold-300">{formatCredits(item.value)}</p>
           </div>
         </div>
