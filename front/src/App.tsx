@@ -8,6 +8,7 @@ import { CasesPage } from './pages/CasesPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { HomePage } from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { ProfilePage } from './pages/ProfilePage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { VerifyEmailPage } from './pages/VerifyEmailPage'
 
@@ -31,6 +32,7 @@ function App() {
             <Route index element={<HomePage />} />
             <Route path="cases" element={<CasesPage />} />
             <Route path="cases/:slug" element={<CaseDetailPage />} />
+            <Route path="profile" element={<ProfilePage />} />
             <Route path="login" element={<AuthPage mode="login" />} />
             <Route path="register" element={<AuthPage mode="register" />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />

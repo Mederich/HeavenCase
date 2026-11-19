@@ -58,7 +58,14 @@ export function Header() {
               >
                 {credits.format(user.balance)} <span className="font-normal text-muted-foreground">crédits</span>
               </span>
-              <span className="hidden max-w-36 truncate text-sm md:inline">{user.username}</span>
+              <Link
+                to="/profile"
+                className="max-w-36 truncate rounded-md px-2 py-1.5 text-sm hover:text-gold-300"
+                aria-label={`Profil de ${user.username}`}
+              >
+                <span className="hidden md:inline">{user.username}</span>
+                <span className="md:hidden">Profil</span>
+              </Link>
               <Button variant="ghost" size="lg" onClick={onLogout} disabled={loggingOut}>
                 Se déconnecter
               </Button>
