@@ -1,4 +1,3 @@
-mod errors;
 mod mailer;
 mod routes;
 mod state;

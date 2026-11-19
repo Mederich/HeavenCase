@@ -1,41 +1,54 @@
-use crate::{errors::AppError, state::AppState};
 use axum::{
     Json, Router,
     extract::{Path, State},
+    http::StatusCode,
     routing::get,
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use utoipa::ToSchema;
+use uuid::Uuid;
 
-#[derive(Serialize, Deserialize)]
-pub struct User {
-    id: u32,
-    nom: String,
-}
+use crate::state::AppState;
 
 pub fn router() -> Router<AppState> {
-    Router::new()
-        .route("/", get(list).post(create))
-        .route("/{id}", get(get_one))
+    Router::new().route("/{id}", get(get_user))
 }
 
-async fn list() -> Json<Vec<User>> {
-    Json(vec![User {
-        id: 1,
-        nom: "Leo".into(),
-    }])
+/// Profil public : ni email, ni solde, ni seed
+#[derive(Serialize, ToSchema, sqlx::FromRow)]
+pub struct PublicUser {
+    pub id: Uuid,
+    pub username: String,
+    pub level: i32,
 }
 
-async fn get_one(Path(id): Path<u32>) -> Result<Json<User>, AppError> {
-    if id == 1 {
-        Ok(Json(User {
-            id,
-            nom: "Leo".into(),
-        }))
-    } else {
-        Err(AppError::NotFound(format!("User {id} introuvable")))
-    }
-}
+#[utoipa::path(
+    get,
+    path = "/users/{id}",
+    tag = "users",
+    params(("id" = Uuid, Path, description = "Identifiant de l'utilisateur")),
+    responses(
+        (status = 200, description = "Profil public", body = PublicUser),
+        (status = 404, description = "Utilisateur introuvable"),
+    )
+)]
+pub async fn get_user(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<PublicUser>, (StatusCode, String)> {
+    let user: Option<PublicUser> =
+        sqlx::query_as("SELECT id, username, level FROM users WHERE id = $1 AND banned_at IS NULL")
+            .bind(id)
+            .fetch_optional(&state.pool)
+            .await
+            .map_err(|e| {
+                tracing::error!("{e}");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "Erreur interne".to_string(),
+                )
+            })?;
 
-async fn create(State(_state): State<AppState>, Json(user): Json<User>) -> Json<User> {
-    Json(user) // ici : insertion en base via state.db
+    user.map(Json)
+        .ok_or((StatusCode::NOT_FOUND, "Utilisateur introuvable".to_string()))
 }
