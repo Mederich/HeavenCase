@@ -167,7 +167,12 @@ mod tests {
     async fn liste_les_caisses_de_demo_par_prix(pool: PgPool) {
         let cases = list_cases(&pool).await.unwrap();
         let slugs: Vec<_> = cases.iter().map(|c| c.slug.as_str()).collect();
-        assert_eq!(slugs, ["aube", "zenith", "empyree"]);
+        assert_eq!(
+            slugs,
+            [
+                "nuee", "aube", "celeste", "zenith", "olympe", "empyree", "divine", "pantheon"
+            ]
+        );
     }
 
     #[sqlx::test]
