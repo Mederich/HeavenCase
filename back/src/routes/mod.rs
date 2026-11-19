@@ -1,21 +1,44 @@
 mod auth;
+mod cases;
+mod fair;
+mod openings;
 mod users;
 
 use crate::state::AppState;
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::routing::{get, post};
+use axum::routing::{get, post, put};
 use axum::{Json, Router};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(db_health, auth::register, auth::verify_email, auth::login, auth::me, auth::logout, auth::forgot_password, auth::reset_password, users::get_user),
+    paths(
+        db_health,
+        auth::register,
+        auth::verify_email,
+        auth::login,
+        auth::me,
+        auth::logout,
+        auth::forgot_password,
+        auth::reset_password,
+        users::get_user,
+        cases::list,
+        cases::detail,
+        cases::open,
+        fair::get_seeds,
+        fair::set_client_seed,
+        fair::rotate,
+        fair::verify,
+        openings::history,
+    ),
     tags(
         (name = "health", description = "État du service"),
         (name = "auth", description = "Inscription et connexion"),
-        (name = "users", description = "Profils des joueurs")
+        (name = "users", description = "Profils des joueurs"),
+        (name = "cases", description = "Catalogue de caisses"),
+        (name = "fair", description = "Preuve d'équité (provably fair)")
     )
 )]
 pub struct ApiDoc;
@@ -32,6 +55,14 @@ pub fn router() -> Router<AppState> {
         .route("/auth/logout", post(auth::logout))
         .route("/auth/forgot-password", post(auth::forgot_password))
         .route("/auth/reset-password", post(auth::reset_password))
+        .route("/cases", get(cases::list))
+        .route("/cases/{slug}", get(cases::detail))
+        .route("/cases/{slug}/open", post(cases::open))
+        .route("/fair/seeds", get(fair::get_seeds))
+        .route("/fair/client-seed", put(fair::set_client_seed))
+        .route("/fair/rotate", post(fair::rotate))
+        .route("/fair/verify", get(fair::verify))
+        .route("/openings", get(openings::history))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
 }
 
