@@ -4,8 +4,34 @@
     {
       "name": "front",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "front", "run", "dev", "--", "--port", "5180", "--strictPort"],
+      "runtimeArgs": [
+        "--prefix",
+        "front",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5180",
+        "--strictPort"
+      ],
       "port": 5180
+    },
+    {
+      "name": "front-api3001",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "API_PROXY_TARGET=http://localhost:3001",
+        "npm",
+        "--prefix",
+        "front",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5181",
+        "--strictPort"
+      ],
+      "port": 5181
     }
   ]
 }
