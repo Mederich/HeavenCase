@@ -34,6 +34,7 @@ use utoipa_swagger_ui::SwaggerUi;
         fair::verify,
         openings::history,
         inventory::list,
+        inventory::sell,
     ),
     tags(
         (name = "health", description = "État du service"),
@@ -67,6 +68,7 @@ pub fn router() -> Router<AppState> {
         .route("/fair/verify", get(fair::verify))
         .route("/openings", get(openings::history))
         .route("/inventory", get(inventory::list))
+        .route("/inventory/{id}/sell", post(inventory::sell))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
 }
 

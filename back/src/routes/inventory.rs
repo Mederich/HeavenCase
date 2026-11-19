@@ -1,14 +1,15 @@
 use axum::{
     Json,
-    extract::{Query, State},
+    extract::{Path, Query, State},
 };
 use serde::Deserialize;
 use utoipa::IntoParams;
+use uuid::Uuid;
 
 use crate::{
     auth_user::AuthUser,
     errors::AppError,
-    inventory::{self, InventoryEntry, StatusFilter},
+    inventory::{self, InventoryEntry, SaleResult, StatusFilter},
     state::AppState,
 };
 
@@ -38,4 +39,25 @@ pub async fn list(
         AppError::BadRequest("Statut inconnu : owned, sold ou all attendu".into())
     })?;
     Ok(Json(inventory::list(&state.pool, user_id, status).await?))
+}
+
+#[utoipa::path(
+    post,
+    path = "/inventory/{id}/sell",
+    tag = "inventory",
+    params(("id" = Uuid, Path, description = "Id de la ligne d'inventaire")),
+    responses(
+        (status = 200, description = "Skin vendu, solde crédité", body = SaleResult),
+        (status = 401, description = "Non connecté"),
+        (status = 403, description = "Compte suspendu"),
+        (status = 404, description = "Objet absent de l'inventaire du joueur"),
+        (status = 409, description = "Objet déjà vendu"),
+    )
+)]
+pub async fn sell(
+    State(state): State<AppState>,
+    AuthUser(user_id): AuthUser,
+    Path(id): Path<Uuid>,
+) -> Result<Json<SaleResult>, AppError> {
+    Ok(Json(inventory::sell(&state.pool, user_id, id).await?))
 }

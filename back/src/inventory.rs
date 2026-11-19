@@ -5,6 +5,8 @@ use sqlx::{FromRow, PgPool};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
+use crate::errors::AppError;
+
 /// Statuts d'inventaire qu'on peut filtrer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StatusFilter {
@@ -80,6 +82,96 @@ pub async fn list(
     .await
 }
 
+/// Résultat d'une revente.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct SaleResult {
+    pub inventory_item_id: Uuid,
+    pub item_name: String,
+    /// Crédits reçus (valeur du skin).
+    pub amount: i64,
+    /// Solde du joueur après la vente.
+    pub balance_after: i64,
+}
+
+/// Revend un skin de l'inventaire à sa valeur.
+///
+/// Une seule transaction verrouille le joueur puis la ligne d'inventaire :
+/// deux ventes simultanées du même skin ne créditent qu'une fois.
+pub async fn sell(
+    pool: &PgPool,
+    user_id: Uuid,
+    inventory_item_id: Uuid,
+) -> Result<SaleResult, AppError> {
+    let mut tx = pool.begin().await?;
+
+    let banned: Option<bool> =
+        sqlx::query_scalar("SELECT banned_at IS NOT NULL FROM users WHERE id = $1 FOR UPDATE")
+            .bind(user_id)
+            .fetch_optional(&mut *tx)
+            .await?;
+    match banned {
+        None => return Err(AppError::Unauthorized("Joueur introuvable".into())),
+        Some(true) => return Err(AppError::Forbidden("Compte suspendu".into())),
+        Some(false) => {}
+    }
+
+    let row: Option<(String, String, i64)> = sqlx::query_as(
+        "SELECT inv.status::text, i.name, i.value
+         FROM inventory_items inv
+         JOIN items i ON i.id = inv.item_id
+         WHERE inv.id = $1 AND inv.user_id = $2
+         FOR UPDATE OF inv",
+    )
+    .bind(inventory_item_id)
+    .bind(user_id)
+    .fetch_optional(&mut *tx)
+    .await?;
+    let Some((status, item_name, value)) = row else {
+        return Err(AppError::NotFound(
+            "Objet introuvable dans ton inventaire".into(),
+        ));
+    };
+    if status != "owned" {
+        return Err(AppError::Conflict(match status.as_str() {
+            "sold" => "Objet déjà vendu".into(),
+            _ => "Objet plus disponible".into(),
+        }));
+    }
+
+    sqlx::query("UPDATE inventory_items SET status = 'sold' WHERE id = $1")
+        .bind(inventory_item_id)
+        .execute(&mut *tx)
+        .await?;
+
+    let balance_after: i64 = sqlx::query_scalar(
+        "UPDATE users SET balance = balance + $2 WHERE id = $1 RETURNING balance",
+    )
+    .bind(user_id)
+    .bind(value)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    sqlx::query(
+        "INSERT INTO transactions (user_id, type, amount, balance_after, reference_id)
+         VALUES ($1, 'item_sell', $2, $3, $4)",
+    )
+    .bind(user_id)
+    .bind(value)
+    .bind(balance_after)
+    .bind(inventory_item_id)
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+
+    Ok(SaleResult {
+        inventory_item_id,
+        item_name,
+        amount: value,
+        balance_after,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -138,5 +230,102 @@ mod tests {
             1
         );
         assert_eq!(list(&pool, user, StatusFilter::All).await.unwrap().len(), 1);
+    }
+
+    async fn balance(pool: &PgPool, user: Uuid) -> i64 {
+        sqlx::query_scalar("SELECT balance FROM users WHERE id = $1")
+            .bind(user)
+            .fetch_one(pool)
+            .await
+            .unwrap()
+    }
+
+    #[sqlx::test]
+    async fn vend_un_skin_et_credite_le_solde(pool: PgPool) {
+        let user = create_user(&pool, 1_000).await;
+        let opened = open_case(&pool, user, "heaven").await.unwrap();
+        let value = opened.item.value;
+
+        let sale = sell(&pool, user, opened.inventory_item_id).await.unwrap();
+
+        assert_eq!(sale.amount, value);
+        assert_eq!(sale.balance_after, 850 + value);
+        assert_eq!(balance(&pool, user).await, 850 + value);
+
+        let status: String =
+            sqlx::query_scalar("SELECT status::text FROM inventory_items WHERE id = $1")
+                .bind(opened.inventory_item_id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(status, "sold");
+
+        let (amount, after, reference): (i64, i64, Uuid) = sqlx::query_as(
+            "SELECT amount, balance_after, reference_id FROM transactions
+             WHERE user_id = $1 AND type = 'item_sell'",
+        )
+        .bind(user)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!(
+            (amount, after, reference),
+            (value, 850 + value, opened.inventory_item_id)
+        );
+    }
+
+    #[sqlx::test]
+    async fn refuse_une_deuxieme_vente(pool: PgPool) {
+        let user = create_user(&pool, 1_000).await;
+        let opened = open_case(&pool, user, "heaven").await.unwrap();
+        sell(&pool, user, opened.inventory_item_id).await.unwrap();
+        let after_first = balance(&pool, user).await;
+
+        assert!(matches!(
+            sell(&pool, user, opened.inventory_item_id).await,
+            Err(AppError::Conflict(_))
+        ));
+        assert_eq!(balance(&pool, user).await, after_first);
+    }
+
+    #[sqlx::test]
+    async fn ventes_simultanees_ne_creditent_qu_une_fois(pool: PgPool) {
+        let user = create_user(&pool, 1_000).await;
+        let opened = open_case(&pool, user, "heaven").await.unwrap();
+        let id = opened.inventory_item_id;
+
+        let (a, b) = tokio::join!(sell(&pool, user, id), sell(&pool, user, id));
+        assert_eq!([a.is_ok(), b.is_ok()].iter().filter(|ok| **ok).count(), 1);
+        assert_eq!(balance(&pool, user).await, 850 + opened.item.value);
+    }
+
+    #[sqlx::test]
+    async fn ne_vend_pas_le_skin_d_un_autre_joueur(pool: PgPool) {
+        let owner = create_user(&pool, 1_000).await;
+        let thief = create_user(&pool, 0).await;
+        let opened = open_case(&pool, owner, "heaven").await.unwrap();
+
+        assert!(matches!(
+            sell(&pool, thief, opened.inventory_item_id).await,
+            Err(AppError::NotFound(_))
+        ));
+        assert_eq!(balance(&pool, thief).await, 0);
+    }
+
+    #[sqlx::test]
+    async fn compte_suspendu_ne_vend_pas(pool: PgPool) {
+        let user = create_user(&pool, 1_000).await;
+        let opened = open_case(&pool, user, "heaven").await.unwrap();
+        sqlx::query("UPDATE users SET banned_at = now() WHERE id = $1")
+            .bind(user)
+            .execute(&pool)
+            .await
+            .unwrap();
+
+        assert!(matches!(
+            sell(&pool, user, opened.inventory_item_id).await,
+            Err(AppError::Forbidden(_))
+        ));
+        assert_eq!(balance(&pool, user).await, 850);
     }
 }
