@@ -1,5 +1,5 @@
 import { Link, NavLink } from 'react-router'
-import { WalletIcon } from 'lucide-react'
+import { PlusIcon, WalletIcon } from 'lucide-react'
 import { useAuth } from '@/auth/useAuth'
 import { Button } from '@/components/ui/button'
 import { AccountMenu } from './AccountMenu'
@@ -56,8 +56,14 @@ export function Header() {
                 <span className="font-semibold whitespace-nowrap tabular-nums text-gold-300">
                   {credits.format(user.balance)}
                 </span>
-                <span className="hidden text-muted-foreground sm:inline">crédits</span>
+                <span className="hidden text-muted-foreground lg:inline">crédits</span>
               </Link>
+              <Button asChild size="lg" className="h-10 px-3 md:px-4">
+                <Link to="/deposit" aria-label="Déposer des crédits">
+                  <PlusIcon aria-hidden />
+                  <span className="hidden md:inline">Déposer</span>
+                </Link>
+              </Button>
               <AccountMenu user={user} />
             </>
           )}
