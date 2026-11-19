@@ -27,15 +27,26 @@ pub struct CaseSummary {
 const CASE_COLUMNS: &str = "c.id, c.name, c.slug, c.image_url, c.description, c.price,
                             cat.name AS category_name, cat.slug AS category_slug";
 
-/// Caisses actives, de la moins chère à la plus chère.
-pub async fn list_cases(pool: &PgPool) -> Result<Vec<CaseSummary>, sqlx::Error> {
+/// Plage de prix en crédits, bornes incluses ; `None` = pas de borne.
+#[derive(Debug, Default, Clone, Copy)]
+pub struct PriceRange {
+    pub min: Option<i64>,
+    pub max: Option<i64>,
+}
+
+/// Caisses actives dans la plage de prix, par section puis de la moins chère à la plus chère.
+pub async fn list_cases(pool: &PgPool, range: PriceRange) -> Result<Vec<CaseSummary>, sqlx::Error> {
     sqlx::query_as(&format!(
         "SELECT {CASE_COLUMNS}
          FROM cases c
          LEFT JOIN case_categories cat ON cat.id = c.category_id
          WHERE c.is_active
+           AND ($1::BIGINT IS NULL OR c.price >= $1)
+           AND ($2::BIGINT IS NULL OR c.price <= $2)
          ORDER BY cat.position NULLS LAST, c.price, c.name"
     ))
+    .bind(range.min)
+    .bind(range.max)
     .fetch_all(pool)
     .await
 }
@@ -180,7 +191,7 @@ mod tests {
 
     #[sqlx::test]
     async fn liste_les_caisses_par_section_puis_par_prix(pool: PgPool) {
-        let cases = list_cases(&pool).await.unwrap();
+        let cases = list_cases(&pool, PriceRange::default()).await.unwrap();
         let slugs: Vec<_> = cases.iter().map(|c| c.slug.as_str()).collect();
         assert_eq!(
             slugs,
@@ -203,18 +214,44 @@ mod tests {
     }
 
     #[sqlx::test]
+    async fn filtre_par_prix_bornes_incluses(pool: PgPool) {
+        let range = PriceRange {
+            min: Some(250),
+            max: Some(800),
+        };
+        let cases = list_cases(&pool, range).await.unwrap();
+        let slugs: Vec<_> = cases.iter().map(|c| c.slug.as_str()).collect();
+        assert_eq!(
+            slugs,
+            ["olympus", "celestial", "divine", "desert-eagle", "ak-47"]
+        );
+        assert!(cases.iter().all(|c| (250..=800).contains(&c.price)));
+    }
+
+    #[sqlx::test]
+    async fn filtre_avec_une_seule_borne(pool: PgPool) {
+        let range = PriceRange {
+            min: Some(6000),
+            max: None,
+        };
+        let cases = list_cases(&pool, range).await.unwrap();
+        let slugs: Vec<_> = cases.iter().map(|c| c.slug.as_str()).collect();
+        assert_eq!(slugs, ["pantheon", "gloves", "knife"]);
+    }
+
+    #[sqlx::test]
     async fn ignore_les_caisses_inactives(pool: PgPool) {
         sqlx::query("UPDATE cases SET is_active = false WHERE slug = 'olympus'")
             .execute(&pool)
             .await
             .unwrap();
-        let cases = list_cases(&pool).await.unwrap();
+        let cases = list_cases(&pool, PriceRange::default()).await.unwrap();
         assert!(cases.iter().all(|c| c.slug != "olympus"));
     }
 
     #[sqlx::test]
     async fn les_caisses_de_demo_totalisent_100_pourcent(pool: PgPool) {
-        for case in list_cases(&pool).await.unwrap() {
+        for case in list_cases(&pool, PriceRange::default()).await.unwrap() {
             let table = loot_table(&pool, case.id).await.unwrap();
             assert!(is_complete(&table), "{} ne fait pas 100 %", case.slug);
             assert_eq!(table.last().unwrap().roll_max, TICKET_RANGE - 1);
