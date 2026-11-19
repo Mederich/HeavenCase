@@ -19,6 +19,11 @@ use utoipa_swagger_ui::SwaggerUi;
         auth::register,
         auth::verify_email,
         auth::login,
+        auth::me,
+        auth::logout,
+        auth::forgot_password,
+        auth::reset_password,
+        users::get_user,
         cases::list,
         cases::detail,
         cases::open,
@@ -31,6 +36,7 @@ use utoipa_swagger_ui::SwaggerUi;
     tags(
         (name = "health", description = "État du service"),
         (name = "auth", description = "Inscription et connexion"),
+        (name = "users", description = "Profils des joueurs"),
         (name = "cases", description = "Catalogue de caisses"),
         (name = "fair", description = "Preuve d'équité (provably fair)")
     )
@@ -45,6 +51,10 @@ pub fn router() -> Router<AppState> {
         .route("/auth/register", post(auth::register))
         .route("/auth/verify", get(auth::verify_email))
         .route("/auth/login", post(auth::login))
+        .route("/auth/me", get(auth::me))
+        .route("/auth/logout", post(auth::logout))
+        .route("/auth/forgot-password", post(auth::forgot_password))
+        .route("/auth/reset-password", post(auth::reset_password))
         .route("/cases", get(cases::list))
         .route("/cases/{slug}", get(cases::detail))
         .route("/cases/{slug}/open", post(cases::open))

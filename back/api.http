@@ -5,13 +5,6 @@ GET http://localhost:3000/health
 GET http://localhost:3000/health/db
 
 ###
-GET http://localhost:3000/users/1
-
-###
-POST http://localhost:3000/users
-Content-Type: application/json
-
-###
 POST http://localhost:3000/auth/register
 Content-Type: application/json
 
@@ -23,6 +16,32 @@ POST http://localhost:3000/auth/login
 Content-Type: application/json
 
 { "email": "leo@test.com", "password": "motdepasse123" }
+
+###
+
+POST http://localhost:3000/auth/forgot-password
+Content-Type: application/json
+
+{ "email": "leo@test.com" }
+
+###
+
+POST http://localhost:3000/auth/reset-password
+Content-Type: application/json
+
+{ "token": "TOKEN_FROM_STEP_7", "new_password": "nouveaumdp123" }
+
+
+###
+GET http://localhost:3000/users/243f29a8-a92c-4f0a-ac99-652215a37e66
+###
+
+GET http://localhost:3000/auth/me
+
+###
+
+POST http://localhost:3000/auth/logout
+
 ###
 
 GET http://localhost:3000/cases
