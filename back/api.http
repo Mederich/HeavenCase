@@ -10,3 +10,50 @@ GET http://localhost:3000/users/1
 ###
 POST http://localhost:3000/users
 Content-Type: application/json
+
+###
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{ "username": "leo", "email": "leo@test.com", "password": "motdepasse123" }
+
+###
+
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{ "email": "leo@test.com", "password": "motdepasse123" }
+###
+
+GET http://localhost:3000/cases
+
+###
+
+GET http://localhost:3000/cases/aube
+
+###
+
+GET http://localhost:3000/fair/seeds
+
+###
+
+PUT http://localhost:3000/fair/client-seed
+Content-Type: application/json
+
+{ "client_seed": "ma-seed-perso" }
+
+###
+
+POST http://localhost:3000/fair/rotate
+
+###
+
+GET http://localhost:3000/fair/verify?server_seed=server-seed&client_seed=client-seed&nonce=0&case=aube
+
+###
+
+POST http://localhost:3000/cases/aube/open
+
+###
+
+GET http://localhost:3000/openings?limit=10
