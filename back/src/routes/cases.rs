@@ -6,7 +6,7 @@ use axum::{
 use crate::{
     auth_user::AuthUser,
     catalog::{self, CaseDetail, CaseSummary},
-    errors::AppError,
+    errors::{AppError, ErrorBody},
     opening::{self, OpeningResult},
     state::AppState,
 };
@@ -28,7 +28,7 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<CaseSummary>
     params(("slug" = String, Path, description = "Identifiant lisible de la caisse")),
     responses(
         (status = 200, description = "Fiche de la caisse avec les probabilités de chaque objet", body = CaseDetail),
-        (status = 404, description = "Caisse introuvable ou indisponible"),
+        (status = 404, description = "Caisse introuvable ou indisponible", body = ErrorBody),
     )
 )]
 pub async fn detail(
@@ -45,14 +45,15 @@ pub async fn detail(
     post,
     path = "/cases/{slug}/open",
     tag = "cases",
+    security(("session" = [])),
     params(("slug" = String, Path, description = "Identifiant lisible de la caisse")),
     responses(
         (status = 200, description = "Caisse achetée et ouverte : objet gagné déjà dans l'inventaire", body = OpeningResult),
-        (status = 401, description = "Non connecté"),
-        (status = 402, description = "Solde insuffisant"),
-        (status = 403, description = "Compte suspendu"),
-        (status = 404, description = "Caisse introuvable ou indisponible"),
-        (status = 409, description = "Caisse mal configurée (probabilités ≠ 100 %)"),
+        (status = 401, description = "Non connecté", body = ErrorBody),
+        (status = 402, description = "Solde insuffisant", body = ErrorBody),
+        (status = 403, description = "Compte suspendu", body = ErrorBody),
+        (status = 404, description = "Caisse introuvable ou indisponible", body = ErrorBody),
+        (status = 409, description = "Caisse mal configurée (probabilités ≠ 100 %)", body = ErrorBody),
     )
 )]
 pub async fn open(

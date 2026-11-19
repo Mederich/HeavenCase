@@ -18,6 +18,8 @@ Documentation Guide : https://linear.app/lemedpo/document/heaven-case-guide-line
 - [Structure du dépôt](#structure-du-dépôt)
 - [Démarrage](#démarrage)
   - [Prérequis](#prérequis)
+- [Documentation](#documentation)
+- [CI/CD](#cicd)
 - [Méthodologie](#méthodologie)
 - [Avertissement](#avertissement)
 
@@ -67,6 +69,30 @@ cd front
 npm install
 npm run dev
 ```
+
+## Documentation
+
+| Doc | En local | Publiée |
+| --- | --- | --- |
+| API (Swagger / OpenAPI) | `cargo run` dans `back/`, puis `http://localhost:3000/swagger-ui` (spec : `/api-docs/openapi.json`) | `https://mederich.github.io/HeavenCase/api/` |
+| Composants front (Storybook) | `npm run storybook` dans `front/`, puis `http://localhost:6006` | `https://mederich.github.io/HeavenCase/storybook/` |
+
+La spec OpenAPI est générée depuis le code (annotations utoipa). Pour l'exporter sans base de données :
+
+```bash
+cd back
+OPENAPI_OUT=openapi.json cargo test openapi_spec
+```
+
+Les stories sont à côté des composants (`*.stories.tsx`), les données d'exemple dans `front/src/stories/fixtures.ts`.
+
+## CI/CD
+
+| Workflow | Déclencheur | Jobs |
+| --- | --- | --- |
+| `ci.yml` | PR vers `dev`, `master`, `feat/**`... et push sur `dev` / `master` | Front : lint, build, build Storybook, image Docker. Back : fmt, clippy, tests (Postgres 17), export OpenAPI, build release, image Docker. Audits npm et cargo (informatifs). Storybook et `openapi.json` sont joints au run en artefacts. |
+| `docs.yml` | Push sur `dev` / `master` (front ou back modifié), ou manuel | Build de Storybook et de la spec OpenAPI, publication sur GitHub Pages. |
+| `validate-pr-source.yml` | Toute PR | Seule `dev` peut être mergée dans `master`. |
 
 ## Méthodologie
 

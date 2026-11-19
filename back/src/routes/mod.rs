@@ -9,12 +9,21 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::routing::{get, post, put};
 use axum::{Json, Router};
-use utoipa::OpenApi;
+use utoipa::openapi::security::{ApiKey, ApiKeyValue, SecurityScheme};
+use utoipa::{Modify, OpenApi};
 use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(OpenApi)]
 #[openapi(
+    info(
+        title = "HeavenCases API",
+        description = "API du site d'ouverture de caisses CS2. Les routes marquées d'un cadenas demandent le cookie de session `id` posé par `POST /auth/login`. Les erreurs de `/auth` et `/users` sont en texte brut, les autres en JSON (`ErrorBody`)."
+    ),
+    servers((url = "/", description = "Back en direct"), (url = "/api", description = "Via le proxy du front")),
+    modifiers(&SessionCookie),
+    components(schemas(crate::errors::ErrorBody)),
     paths(
+        health,
         db_health,
         auth::register,
         auth::verify_email,
@@ -43,9 +52,25 @@ use utoipa_swagger_ui::SwaggerUi;
 )]
 pub struct ApiDoc;
 
+/// Déclare l'authentification par cookie de session (tower-sessions).
+struct SessionCookie;
+
+impl Modify for SessionCookie {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let components = openapi.components.get_or_insert_with(Default::default);
+        components.add_security_scheme(
+            "session",
+            SecurityScheme::ApiKey(ApiKey::Cookie(ApiKeyValue::with_description(
+                "id",
+                "Cookie de session posé par POST /auth/login",
+            ))),
+        );
+    }
+}
+
 pub fn router() -> Router<AppState> {
     Router::new()
-        .route("/health", get(|| async { "ok" }))
+        .route("/health", get(health))
         .route("/health/db", get(db_health))
         .nest("/users", users::router())
         .route("/auth/register", post(auth::register))
@@ -68,6 +93,16 @@ pub fn router() -> Router<AppState> {
 
 #[utoipa::path(
     get,
+    path = "/health",
+    tag = "health",
+    responses((status = 200, description = "Service démarré", body = String, content_type = "text/plain"))
+)]
+async fn health() -> &'static str {
+    "ok"
+}
+
+#[utoipa::path(
+    get,
     path = "/health/db",
     tag = "health",
     responses((status = 200, description = "Tables présentes en base", body = Vec<String>))
@@ -84,4 +119,38 @@ async fn db_health(
     .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
 
     Ok(Json(tables))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ApiDoc;
+    use utoipa::OpenApi;
+
+    /// Vérifie la spec et l'écrit dans `$OPENAPI_OUT` si la variable est définie (export CI).
+    #[test]
+    fn openapi_spec() {
+        let spec = ApiDoc::openapi();
+        let json = spec.to_pretty_json().expect("spec sérialisable");
+
+        for (path, item) in &spec.paths.paths {
+            assert!(path.starts_with('/'), "chemin invalide : {path}");
+            let ops = [&item.get, &item.post, &item.put, &item.delete, &item.patch];
+            for op in ops.into_iter().flatten() {
+                assert!(
+                    op.tags.as_ref().is_some_and(|t| !t.is_empty()),
+                    "{path} sans tag"
+                );
+                assert!(!op.responses.responses.is_empty(), "{path} sans réponse");
+            }
+        }
+        assert!(
+            spec.components
+                .as_ref()
+                .is_some_and(|c| c.security_schemes.contains_key("session"))
+        );
+
+        if let Ok(out) = std::env::var("OPENAPI_OUT") {
+            std::fs::write(&out, json).expect("écriture de la spec");
+        }
+    }
 }

@@ -3,7 +3,15 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use serde_json::json;
+use serde::Serialize;
+use utoipa::ToSchema;
+
+/// Corps des réponses d'erreur JSON.
+#[derive(Serialize, ToSchema)]
+pub struct ErrorBody {
+    /// Message lisible par le joueur.
+    pub error: String,
+}
 
 #[derive(Debug)]
 pub enum AppError {
@@ -35,7 +43,7 @@ impl IntoResponse for AppError {
                 )
             }
         };
-        (status, Json(json!({ "error": msg }))).into_response()
+        (status, Json(ErrorBody { error: msg })).into_response()
     }
 }
 
