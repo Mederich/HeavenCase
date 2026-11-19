@@ -1,11 +1,16 @@
-import { useId, useState, type InputHTMLAttributes } from 'react'
+import { useId, useState, type ComponentProps } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
-interface FieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id'> {
+interface FieldProps extends Omit<ComponentProps<typeof Input>, 'id'> {
   label: string
   error?: string
   hint?: string
 }
 
+// Champ de formulaire : Label + Input shadcn, message d'erreur ou d'aide
+// sous le champ, et bouton afficher/masquer pour les mots de passe.
 export function Field({ label, error, hint, type = 'text', className, ...input }: FieldProps) {
   const id = useId()
   const [revealed, setRevealed] = useState(false)
@@ -14,41 +19,38 @@ export function Field({ label, error, hint, type = 'text', className, ...input }
 
   return (
     <div className={className}>
-      <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-parchment">
+      <Label htmlFor={id} className="mb-2">
         {label}
-      </label>
+      </Label>
       <div className="relative">
-        <input
+        <Input
           id={id}
           type={isPassword && revealed ? 'text' : type}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className={
-            'w-full rounded-md border bg-ink/70 px-3 py-2.5 text-sm text-parchment placeholder:text-muted/70 ' +
-            'outline-none transition-colors focus:border-gold-400 focus:ring-2 focus:ring-gold-400/25 ' +
-            (error ? 'border-danger/80' : 'border-line') +
-            (isPassword ? ' pr-20' : '')
-          }
+          className={isPassword ? 'h-10 pr-20' : 'h-10'}
           {...input}
         />
         {isPassword && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setRevealed((r) => !r)}
-            className="absolute inset-y-0 right-0 px-3 text-xs font-medium text-muted hover:text-gold-300"
+            className="absolute top-1/2 right-1.5 -translate-y-1/2 text-muted-foreground"
             aria-label={revealed ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
             aria-pressed={revealed}
           >
             {revealed ? 'Masquer' : 'Afficher'}
-          </button>
+          </Button>
         )}
       </div>
       {error ? (
-        <p id={`${id}-error`} className="mt-1.5 text-xs text-danger">
+        <p id={`${id}-error`} className="mt-1.5 text-xs text-destructive">
           {error}
         </p>
       ) : hint ? (
-        <p id={`${id}-hint`} className="mt-1.5 text-xs text-muted">
+        <p id={`${id}-hint`} className="mt-1.5 text-xs text-muted-foreground">
           {hint}
         </p>
       ) : null}

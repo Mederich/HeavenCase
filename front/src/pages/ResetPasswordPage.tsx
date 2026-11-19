@@ -1,11 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
-import { Alert } from '../components/Alert'
-import { AuthLayout } from '../components/AuthLayout'
-import { Field } from '../components/Field'
-import { api, toastError } from '../lib/api'
-import { buttonPrimary } from '../lib/styles'
+import { SuccessAlert } from '@/components/SuccessAlert'
+import { AuthLayout } from '@/components/AuthLayout'
+import { Field } from '@/components/Field'
+import { api, toastError } from '@/lib/api'
+import { Button } from '@/components/ui/button'
 
 const MIN_PASSWORD = 8
 const MISSING_TOKEN = 'Lien de réinitialisation incomplet.'
@@ -49,17 +49,17 @@ export function ResetPasswordPage() {
     <AuthLayout title="Nouveau mot de passe" subtitle="Choisis le nouveau mot de passe de ton compte.">
       {!token ? (
         <div className="space-y-5">
-          <p className="text-sm text-muted">Ouvre le lien reçu par mail en entier, ou demandes-en un nouveau.</p>
-          <Link to="/mot-de-passe-oublie" className={`${buttonPrimary} w-full`}>
-            Demander un nouveau lien
-          </Link>
+          <p className="text-sm text-muted-foreground">Ouvre le lien reçu par mail en entier, ou demandes-en un nouveau.</p>
+          <Button asChild size="lg" className="h-10 w-full">
+            <Link to="/mot-de-passe-oublie">Demander un nouveau lien</Link>
+          </Button>
         </div>
       ) : done ? (
         <div className="space-y-5">
-          <Alert tone="success">Ton mot de passe a été modifié.</Alert>
-          <Link to="/connexion" className={`${buttonPrimary} w-full`}>
-            Se connecter
-          </Link>
+          <SuccessAlert>Ton mot de passe a été modifié.</SuccessAlert>
+          <Button asChild size="lg" className="h-10 w-full">
+            <Link to="/connexion">Se connecter</Link>
+          </Button>
         </div>
       ) : (
         <form onSubmit={onSubmit} className="space-y-4" noValidate>
@@ -80,11 +80,11 @@ export function ResetPasswordPage() {
             onChange={(e) => setConfirm(e.target.value)}
             error={fieldErrors.confirm}
           />
-          <button type="submit" className={`${buttonPrimary} w-full`} disabled={pending}>
+          <Button type="submit" size="lg" className="h-10 w-full" disabled={pending}>
             {pending ? 'Enregistrement…' : 'Changer le mot de passe'}
-          </button>
+          </Button>
           {failed && (
-            <p className="text-center text-sm text-muted">
+            <p className="text-center text-sm text-muted-foreground">
               Lien expiré ?{' '}
               <Link to="/mot-de-passe-oublie" className="font-medium text-gold-300 hover:underline">
                 Demander un nouveau lien

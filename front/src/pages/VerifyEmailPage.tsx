@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { Alert } from '../components/Alert'
-import { AuthLayout } from '../components/AuthLayout'
-import { api, toastError } from '../lib/api'
-import { buttonPrimary } from '../lib/styles'
+import { SuccessAlert } from '@/components/SuccessAlert'
+import { AuthLayout } from '@/components/AuthLayout'
+import { api, toastError } from '@/lib/api'
+import { Button } from '@/components/ui/button'
 
 type Status = 'pending' | 'ok' | 'error'
 
@@ -34,23 +34,23 @@ export function VerifyEmailPage() {
 
   return (
     <AuthLayout title="Validation du compte">
-      {status === 'pending' && <p className="text-sm text-muted">Validation de ton adresse email…</p>}
+      {status === 'pending' && <p className="text-sm text-muted-foreground">Validation de ton adresse email…</p>}
       {status === 'ok' && (
         <div className="space-y-5">
-          <Alert tone="success">Ton adresse email est validée. Tu peux maintenant te connecter.</Alert>
-          <Link to="/connexion" className={`${buttonPrimary} w-full`}>
-            Se connecter
-          </Link>
+          <SuccessAlert>Ton adresse email est validée. Tu peux maintenant te connecter.</SuccessAlert>
+          <Button asChild size="lg" className="h-10 w-full">
+            <Link to="/connexion">Se connecter</Link>
+          </Button>
         </div>
       )}
       {status === 'error' && (
         <div className="space-y-5">
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted-foreground">
             Le lien a peut-être expiré ou déjà servi. Si ton compte est déjà validé, connecte-toi directement.
           </p>
-          <Link to="/connexion" className={`${buttonPrimary} w-full`}>
-            Aller à la connexion
-          </Link>
+          <Button asChild size="lg" className="h-10 w-full">
+            <Link to="/connexion">Aller à la connexion</Link>
+          </Button>
         </div>
       )}
     </AuthLayout>

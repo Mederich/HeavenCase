@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router'
-import { useAuth } from '../auth/useAuth'
-import { toastError } from '../lib/api'
-import { buttonGhost, buttonOutline, buttonPrimary } from '../lib/styles'
+import { useAuth } from '@/auth/useAuth'
+import { Button } from '@/components/ui/button'
+import { toastError } from '@/lib/api'
 import { Logo } from './Logo'
 
 const credits = new Intl.NumberFormat('fr-FR')
@@ -23,7 +23,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-ink/85 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:gap-6 sm:px-6">
         <Logo />
 
@@ -31,38 +31,38 @@ export function Header() {
           <NavLink
             to="/"
             end
-            className={({ isActive }) => (isActive ? 'text-gold-300' : 'text-muted hover:text-parchment')}
+            className={({ isActive }) => (isActive ? 'text-gold-300' : 'text-muted-foreground hover:text-foreground')}
           >
             Caisses
           </NavLink>
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          {user === undefined && <div className="h-9 w-40 animate-pulse rounded-md bg-panel" aria-hidden />}
+          {user === undefined && <div className="h-9 w-40 animate-pulse rounded-md bg-card" aria-hidden />}
 
           {user === null && (
             <>
-              <Link to="/connexion" className={`${buttonOutline} whitespace-nowrap px-3 py-2 sm:px-4`}>
-                Se connecter
-              </Link>
-              <Link to="/inscription" className={`${buttonPrimary} whitespace-nowrap px-3 py-2 sm:px-4`}>
-                S’inscrire
-              </Link>
+              <Button asChild variant="outline" size="lg" className="border-gold-500/70 text-gold-300 dark:border-gold-500/70 dark:bg-transparent dark:hover:bg-gold-500/10">
+                <Link to="/connexion">Se connecter</Link>
+              </Button>
+              <Button asChild size="lg">
+                <Link to="/inscription">S’inscrire</Link>
+              </Button>
             </>
           )}
 
           {user && (
             <>
               <span
-                className="whitespace-nowrap rounded-md border border-line bg-panel px-3 py-1.5 text-sm font-semibold tabular-nums text-gold-300"
+                className="rounded-md border bg-card px-3 py-1.5 text-sm font-semibold whitespace-nowrap tabular-nums text-gold-300"
                 title="Solde en crédits"
               >
-                {credits.format(user.balance)} <span className="font-normal text-muted">crédits</span>
+                {credits.format(user.balance)} <span className="font-normal text-muted-foreground">crédits</span>
               </span>
-              <span className="hidden max-w-36 truncate text-sm text-parchment md:inline">{user.username}</span>
-              <button type="button" onClick={onLogout} disabled={loggingOut} className={`${buttonGhost} whitespace-nowrap px-3 py-2`}>
+              <span className="hidden max-w-36 truncate text-sm md:inline">{user.username}</span>
+              <Button variant="ghost" size="lg" onClick={onLogout} disabled={loggingOut}>
                 Se déconnecter
-              </button>
+              </Button>
             </>
           )}
         </div>

@@ -1,7 +1,7 @@
 import { BrowserRouter, Outlet, Route, Routes } from 'react-router'
 import { AuthProvider } from './auth/AuthProvider'
 import { Header } from './components/Header'
-import { Toaster } from './components/ui/sonner'
+import { Toaster } from '@/components/ui/sonner'
 import { AuthPage } from './pages/AuthPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { HomePage } from './pages/HomePage'

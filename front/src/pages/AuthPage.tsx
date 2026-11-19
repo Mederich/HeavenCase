@@ -1,30 +1,34 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate, NavLink, useLocation, useNavigate } from 'react-router'
-import { useAuth } from '../auth/useAuth'
-import { Alert } from '../components/Alert'
-import { AuthLayout } from '../components/AuthLayout'
-import { Field } from '../components/Field'
-import { toastError } from '../lib/api'
-import { buttonPrimary } from '../lib/styles'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router'
+import { useAuth } from '@/auth/useAuth'
+import { AuthLayout } from '@/components/AuthLayout'
+import { Field } from '@/components/Field'
+import { SuccessAlert } from '@/components/SuccessAlert'
+import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { toastError } from '@/lib/api'
 
 type Mode = 'login' | 'register'
 
 const MIN_PASSWORD = 8
 
-function AuthTabs() {
-  const tab = ({ isActive }: { isActive: boolean }) =>
-    'flex-1 rounded-md py-2 text-center text-sm font-semibold transition-colors ' +
-    (isActive ? 'bg-panel-raised text-gold-300 shadow-inner' : 'text-muted hover:text-parchment')
+const routes: Record<Mode, string> = { register: '/inscription', login: '/connexion' }
 
+function AuthTabs({ mode }: { mode: Mode }) {
+  const navigate = useNavigate()
   return (
-    <nav className="mb-6 flex gap-1 rounded-lg border border-line bg-ink/60 p-1" aria-label="Connexion ou inscription">
-      <NavLink to="/inscription" className={tab}>
-        Inscription
-      </NavLink>
-      <NavLink to="/connexion" className={tab}>
-        Connexion
-      </NavLink>
-    </nav>
+    <Tabs value={mode} onValueChange={(value) => navigate(routes[value as Mode])} className="mb-6">
+      <TabsList className="h-10 w-full">
+        <TabsTrigger value="register" className="data-active:text-gold-300">
+          Inscription
+        </TabsTrigger>
+        <TabsTrigger value="login" className="data-active:text-gold-300">
+          Connexion
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
   )
 }
 
@@ -70,14 +74,14 @@ function LoginForm() {
         required
       />
       <div className="text-right">
-        <Link to="/mot-de-passe-oublie" className="text-xs text-muted underline-offset-4 hover:text-gold-300 hover:underline">
-          Mot de passe oublié ?
-        </Link>
+        <Button asChild variant="link" size="sm" className="h-auto px-0 text-xs text-muted-foreground hover:text-gold-300">
+          <Link to="/mot-de-passe-oublie">Mot de passe oublié ?</Link>
+        </Button>
       </div>
-      <button type="submit" className={`${buttonPrimary} w-full`} disabled={pending || !email || !password}>
+      <Button type="submit" size="lg" className="h-10 w-full" disabled={pending || !email || !password}>
         {pending ? 'Connexion…' : 'Se connecter'}
-      </button>
-      <p className="text-center text-sm text-muted">
+      </Button>
+      <p className="text-center text-sm text-muted-foreground">
         Pas encore de compte ?{' '}
         <Link to="/inscription" className="font-medium text-gold-300 hover:underline">
           Créer un compte
@@ -134,13 +138,13 @@ function RegisterForm() {
   if (done) {
     return (
       <div className="space-y-5">
-        <Alert tone="success">
+        <SuccessAlert>
           Compte créé ! Un lien de validation a été envoyé à <strong className="font-semibold">{done}</strong>. Clique
           dessus pour activer ton compte, puis connecte-toi.
-        </Alert>
-        <Link to="/connexion" className={`${buttonPrimary} w-full`}>
-          Aller à la connexion
-        </Link>
+        </SuccessAlert>
+        <Button asChild size="lg" className="h-10 w-full">
+          <Link to="/connexion">Aller à la connexion</Link>
+        </Button>
       </div>
     )
   }
@@ -175,22 +179,29 @@ function RegisterForm() {
         hint={`${MIN_PASSWORD} caractères minimum.`}
       />
       <div>
-        <label className="flex items-start gap-2.5 text-sm text-muted">
-          <input
-            type="checkbox"
+        <div className="flex items-start gap-2.5">
+          <Checkbox
+            id="terms"
             checked={terms}
-            onChange={(e) => setTerms(e.target.checked)}
+            onCheckedChange={(checked) => setTerms(checked === true)}
             aria-invalid={errors.terms ? true : undefined}
-            className="mt-0.5 size-4 shrink-0 accent-gold-400"
+            aria-describedby={errors.terms ? 'terms-error' : undefined}
+            className="mt-0.5"
           />
-          <span>J’ai au moins 18 ans et j’accepte les conditions d’utilisation et la politique de confidentialité.</span>
-        </label>
-        {errors.terms && <p className="mt-1.5 text-xs text-danger">{errors.terms}</p>}
+          <Label htmlFor="terms" className="leading-snug font-normal text-muted-foreground">
+            J’ai au moins 18 ans et j’accepte les conditions d’utilisation et la politique de confidentialité.
+          </Label>
+        </div>
+        {errors.terms && (
+          <p id="terms-error" className="mt-1.5 text-xs text-destructive">
+            {errors.terms}
+          </p>
+        )}
       </div>
-      <button type="submit" className={`${buttonPrimary} w-full`} disabled={pending}>
+      <Button type="submit" size="lg" className="h-10 w-full" disabled={pending}>
         {pending ? 'Création du compte…' : 'Créer un compte'}
-      </button>
-      <p className="text-center text-sm text-muted">
+      </Button>
+      <p className="text-center text-sm text-muted-foreground">
         Déjà un compte ?{' '}
         <Link to="/connexion" className="font-medium text-gold-300 hover:underline">
           Se connecter
@@ -213,7 +224,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
           : 'Connecte-toi pour retrouver ton solde et ton inventaire.'
       }
     >
-      <AuthTabs />
+      <AuthTabs mode={mode} />
       {mode === 'register' ? <RegisterForm /> : <LoginForm />}
     </AuthLayout>
   )

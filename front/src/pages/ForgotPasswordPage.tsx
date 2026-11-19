@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
-import { Alert } from '../components/Alert'
-import { AuthLayout } from '../components/AuthLayout'
-import { Field } from '../components/Field'
-import { api, toastError } from '../lib/api'
-import { buttonPrimary } from '../lib/styles'
+import { SuccessAlert } from '@/components/SuccessAlert'
+import { AuthLayout } from '@/components/AuthLayout'
+import { Field } from '@/components/Field'
+import { api, toastError } from '@/lib/api'
+import { Button } from '@/components/ui/button'
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -31,13 +31,13 @@ export function ForgotPasswordPage() {
     >
       {sent ? (
         <div className="space-y-5">
-          <Alert tone="success">
+          <SuccessAlert>
             Si un compte existe pour <strong className="font-semibold">{email.trim()}</strong>, un lien de
             réinitialisation vient d’y être envoyé.
-          </Alert>
-          <Link to="/connexion" className={`${buttonPrimary} w-full`}>
-            Retour à la connexion
-          </Link>
+          </SuccessAlert>
+          <Button asChild size="lg" className="h-10 w-full">
+            <Link to="/connexion">Retour à la connexion</Link>
+          </Button>
         </div>
       ) : (
         <form onSubmit={onSubmit} className="space-y-4" noValidate>
@@ -50,10 +50,10 @@ export function ForgotPasswordPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <button type="submit" className={`${buttonPrimary} w-full`} disabled={pending || !email.trim()}>
+          <Button type="submit" size="lg" className="h-10 w-full" disabled={pending || !email.trim()}>
             {pending ? 'Envoi…' : 'Envoyer le lien'}
-          </button>
-          <p className="text-center text-sm text-muted">
+          </Button>
+          <p className="text-center text-sm text-muted-foreground">
             <Link to="/connexion" className="font-medium text-gold-300 hover:underline">
               Retour à la connexion
             </Link>
