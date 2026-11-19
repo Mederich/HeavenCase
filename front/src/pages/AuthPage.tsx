@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { toastError } from '@/lib/api'
+import { TermsDialog } from '@/components/terms/TermsDialog'
+import { ApiError, toastError } from '@/lib/api'
+import { birthDateError, todayIso } from '@/lib/age'
 
 type Mode = 'login' | 'register'
 
@@ -95,16 +97,25 @@ interface RegisterErrors {
   username?: string
   email?: string
   password?: string
+  birthDate?: string
   terms?: string
 }
 
-function validate(username: string, email: string, password: string, terms: boolean): RegisterErrors {
+function validate(
+  username: string,
+  email: string,
+  password: string,
+  birthDate: string,
+  terms: boolean,
+): RegisterErrors {
   const errors: RegisterErrors = {}
   if (!username.trim()) errors.username = 'Choisis un pseudo.'
   else if (username.trim().length > 32) errors.username = '32 caractères maximum.'
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errors.email = 'Entre une adresse email valide.'
   if (password.length < MIN_PASSWORD) errors.password = `${MIN_PASSWORD} caractères minimum.`
-  if (!terms) errors.terms = 'Tu dois être majeur et accepter les conditions pour t’inscrire.'
+  const birth = birthDateError(birthDate)
+  if (birth) errors.birthDate = birth
+  if (!terms) errors.terms = 'Accepte les conditions générales d’utilisation pour t’inscrire.'
   return errors
 }
 
@@ -113,6 +124,7 @@ function RegisterForm() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [birthDate, setBirthDate] = useState('')
   const [terms, setTerms] = useState(false)
   const [errors, setErrors] = useState<RegisterErrors>({})
   const [done, setDone] = useState<string | null>(null)
@@ -120,16 +132,24 @@ function RegisterForm() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    const found = validate(username, email, password, terms)
+    const found = validate(username, email, password, birthDate, terms)
     setErrors(found)
     if (Object.keys(found).length > 0) return
 
     setPending(true)
     try {
-      await register({ username: username.trim(), email: email.trim(), password })
+      await register({
+        username: username.trim(),
+        email: email.trim(),
+        password,
+        birth_date: birthDate,
+        accept_terms: terms,
+      })
       setDone(email.trim())
     } catch (err) {
-      toastError(err, 'Inscription impossible.')
+      // Refus pour l'âge : message sous le champ concerné.
+      if (err instanceof ApiError && err.status === 403) setErrors({ birthDate: err.message })
+      else toastError(err, 'Inscription impossible.')
     } finally {
       setPending(false)
     }
@@ -177,19 +197,40 @@ function RegisterForm() {
         error={errors.password}
         hint={`${MIN_PASSWORD} caractères minimum.`}
       />
+      <Field
+        label="Date de naissance"
+        type="date"
+        autoComplete="bday"
+        max={todayIso()}
+        value={birthDate}
+        onChange={(e) => setBirthDate(e.target.value)}
+        error={errors.birthDate}
+        hint="18 ans minimum."
+      />
       <div>
         <div className="flex items-start gap-2.5">
           <Checkbox
             id="terms"
+            aria-label="J’accepte les conditions générales d’utilisation"
             checked={terms}
             onCheckedChange={(checked) => setTerms(checked === true)}
             aria-invalid={errors.terms ? true : undefined}
             aria-describedby={errors.terms ? 'terms-error' : undefined}
             className="mt-0.5"
           />
-          <Label htmlFor="terms" className="leading-snug font-normal text-muted-foreground">
-            J’ai au moins 18 ans et j’accepte les conditions d’utilisation et la politique de confidentialité.
-          </Label>
+          <div className="text-sm leading-snug text-muted-foreground">
+            <Label htmlFor="terms" className="inline font-normal text-muted-foreground">
+              J’accepte les{' '}
+            </Label>
+            <TermsDialog
+              onAccept={() => setTerms(true)}
+              trigger={
+                <button type="button" className="font-medium text-gold-300 underline-offset-4 hover:underline">
+                  conditions générales d’utilisation
+                </button>
+              }
+            />
+          </div>
         </div>
         {errors.terms && (
           <p id="terms-error" className="mt-1.5 text-xs text-destructive">
