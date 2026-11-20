@@ -7,11 +7,12 @@ const meta = {
   title: 'Caisses/OpeningResultDialog',
   component: OpeningResultDialog,
   args: {
-    result: openingResult,
+    results: [openingResult],
     open: true,
     price: openingResult.price_paid,
     onOpenChange: fn(),
     onOpenAgain: fn() as (() => void) | null,
+    onSold: fn(),
   },
 } satisfies Meta<typeof OpeningResultDialog>
 

@@ -170,7 +170,7 @@ export function chestTint(price: number): string {
   return 'hue-rotate-[310deg] saturate-150'
 }
 
-/** Réponse de POST /cases/{slug}/open : le tirage est déjà enregistré côté serveur. */
+/** Une caisse ouverte par POST /cases/{slug}/open : le tirage est déjà enregistré côté serveur. */
 export interface OpeningResult {
   opening_id: string
   case_slug: string
@@ -185,6 +185,10 @@ export interface OpeningResult {
   balance_after: number
 }
 
-export function openCase(slug: string) {
-  return api<OpeningResult>(`/cases/${encodeURIComponent(slug)}/open`, { method: 'POST' })
+/** Quantités proposées sur la fiche d'une caisse (maximum accepté par l'API : 10). */
+export const OPEN_COUNTS = [1, 2, 3, 4, 5, 10] as const
+
+/** Ouvre `count` caisses : un résultat par caisse, dans l'ordre des nonces. */
+export function openCase(slug: string, count = 1) {
+  return api<OpeningResult[]>(`/cases/${encodeURIComponent(slug)}/open`, { method: 'POST', body: { count } })
 }

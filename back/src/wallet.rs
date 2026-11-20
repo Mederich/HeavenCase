@@ -81,7 +81,10 @@ pub async fn list(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{inventory, opening::open_case, testutil::create_user};
+    use crate::{
+        inventory,
+        testutil::{create_user, open_case},
+    };
 
     #[sqlx::test]
     async fn liste_achats_et_reventes_avec_leur_detail(pool: PgPool) {

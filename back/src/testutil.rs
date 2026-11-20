@@ -28,3 +28,13 @@ pub async fn create_user(pool: &PgPool, balance: i64) -> Uuid {
     .expect("acceptation des CGU de test");
     id
 }
+
+/// Ouvre une seule caisse (les tests n'ont pas besoin de l'ouverture multiple).
+pub async fn open_case(
+    pool: &PgPool,
+    user_id: Uuid,
+    slug: &str,
+) -> Result<crate::opening::OpeningResult, crate::errors::AppError> {
+    let mut results = crate::opening::open_cases(pool, user_id, slug, 1).await?;
+    Ok(results.remove(0))
+}

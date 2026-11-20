@@ -3,7 +3,7 @@ use axum::{
     extract::{Path, Query, State},
 };
 use serde::Deserialize;
-use utoipa::IntoParams;
+use utoipa::{IntoParams, ToSchema};
 
 use crate::{
     auth_user::AuthUser,
@@ -80,16 +80,30 @@ pub async fn detail(
         .ok_or_else(|| AppError::NotFound(format!("Caisse « {slug} » introuvable")))
 }
 
+/// Corps facultatif de `POST /cases/{slug}/open`.
+#[derive(Deserialize, ToSchema)]
+pub struct OpenRequest {
+    /// Nombre de caisses à ouvrir, de 1 à 10 (1 par défaut).
+    #[serde(default = "one")]
+    pub count: u32,
+}
+
+fn one() -> u32 {
+    1
+}
+
 #[utoipa::path(
     post,
     path = "/cases/{slug}/open",
     tag = "cases",
     security(("session" = [])),
     params(("slug" = String, Path, description = "Identifiant lisible de la caisse")),
+    request_body(content = Option<OpenRequest>, description = "Sans corps : une seule caisse"),
     responses(
-        (status = 200, description = "Caisse achetée et ouverte : objet gagné déjà dans l'inventaire", body = OpeningResult),
+        (status = 200, description = "Caisses achetées et ouvertes, dans l'ordre des nonces : objets gagnés déjà dans l'inventaire", body = Vec<OpeningResult>),
+        (status = 400, description = "Nombre de caisses hors de 1 à 10", body = ErrorBody),
         (status = 401, description = "Non connecté", body = ErrorBody),
-        (status = 402, description = "Solde insuffisant", body = ErrorBody),
+        (status = 402, description = "Solde insuffisant pour le prix total", body = ErrorBody),
         (status = 403, description = "Compte suspendu", body = ErrorBody),
         (status = 404, description = "Caisse introuvable ou indisponible", body = ErrorBody),
         (status = 409, description = "Caisse mal configurée (probabilités ≠ 100 %)", body = ErrorBody),
@@ -99,8 +113,12 @@ pub async fn open(
     State(state): State<AppState>,
     AuthUser(user_id): AuthUser,
     Path(slug): Path<String>,
-) -> Result<Json<OpeningResult>, AppError> {
-    Ok(Json(opening::open_case(&state.pool, user_id, &slug).await?))
+    body: Option<Json<OpenRequest>>,
+) -> Result<Json<Vec<OpeningResult>>, AppError> {
+    let count = body.map_or(1, |Json(b)| b.count);
+    Ok(Json(
+        opening::open_cases(&state.pool, user_id, &slug, count).await?,
+    ))
 }
 
 #[cfg(test)]
