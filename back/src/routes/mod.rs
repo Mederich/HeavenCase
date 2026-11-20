@@ -4,6 +4,7 @@ mod cases;
 mod fair;
 mod inventory;
 mod openings;
+mod payments;
 mod transactions;
 mod users;
 
@@ -51,6 +52,10 @@ use utoipa_swagger_ui::SwaggerUi;
         inventory::list,
         inventory::sell,
         transactions::list,
+        payments::packs,
+        payments::checkout,
+        payments::get,
+        payments::webhook,
     ),
     tags(
         (name = "health", description = "État du service"),
@@ -60,7 +65,7 @@ use utoipa_swagger_ui::SwaggerUi;
         (name = "cases", description = "Catalogue de caisses"),
         (name = "fair", description = "Preuve d'équité (provably fair)"),
         (name = "inventory", description = "Inventaire du joueur"),
-        (name = "wallet", description = "Solde et historique des crédits")
+        (name = "wallet", description = "Solde, dépôts et historique des crédits")
     )
 )]
 pub struct ApiDoc;
@@ -107,6 +112,10 @@ pub fn router() -> Router<AppState> {
         .route("/inventory", get(inventory::list))
         .route("/inventory/{id}/sell", post(inventory::sell))
         .route("/transactions", get(transactions::list))
+        .route("/payments/packs", get(payments::packs))
+        .route("/payments/checkout", post(payments::checkout))
+        .route("/payments/webhook", post(payments::webhook))
+        .route("/payments/{id}", get(payments::get))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
 }
 

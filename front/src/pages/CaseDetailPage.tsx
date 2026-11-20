@@ -197,7 +197,10 @@ export function CaseDetailPage() {
                 </Button>
                 {missing > 0 && (
                   <p className="text-center text-xs text-muted-foreground">
-                    Solde insuffisant : il te manque {formatCredits(missing)}.
+                    Solde insuffisant : il te manque {formatCredits(missing)}.{' '}
+                    <Link to="/deposit" className="font-medium text-gold-300 hover:underline">
+                      Déposer
+                    </Link>
                   </p>
                 )}
               </div>
