@@ -34,6 +34,8 @@ use utoipa_swagger_ui::SwaggerUi;
         auth::logout,
         auth::forgot_password,
         auth::reset_password,
+        auth::complete_account,
+        auth::terms,
         users::get_user,
         cases::list,
         cases::detail,
@@ -87,6 +89,8 @@ pub fn router() -> Router<AppState> {
         .route("/auth/logout", post(auth::logout))
         .route("/auth/forgot-password", post(auth::forgot_password))
         .route("/auth/reset-password", post(auth::reset_password))
+        .route("/auth/complete", post(auth::complete_account))
+        .route("/terms", get(auth::terms))
         .route("/cases", get(cases::list))
         .route("/cases/{slug}", get(cases::detail))
         .route("/cases/{slug}/open", post(cases::open))

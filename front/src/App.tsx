@@ -1,5 +1,6 @@
 import { BrowserRouter, Outlet, Route, Routes } from 'react-router'
 import { AuthProvider } from './auth/AuthProvider'
+import { AccountGate } from './components/AccountGate'
 import { Header } from './components/Header'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthPage } from './pages/AuthPage'
@@ -10,12 +11,14 @@ import { HomePage } from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
+import { TermsPage } from './pages/TermsPage'
 import { VerifyEmailPage } from './pages/VerifyEmailPage'
 
 function Layout() {
   return (
     <div className="flex min-h-svh flex-col">
       <Header />
+      <AccountGate />
       <main className="flex-1">
         <Outlet />
       </main>
@@ -35,6 +38,7 @@ function App() {
             <Route path="profile" element={<ProfilePage />} />
             <Route path="login" element={<AuthPage mode="login" />} />
             <Route path="register" element={<AuthPage mode="register" />} />
+            <Route path="terms" element={<TermsPage />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
             {/* Chemins fixés par les liens envoyés par mail (APP_URL = URL du front) */}
             <Route path="auth/verify" element={<VerifyEmailPage />} />

@@ -10,9 +10,27 @@ use tower_sessions::Session;
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
-use crate::state::AppState;
+use crate::{
+    auth_user::AuthUser,
+    eligibility::{self, Eligibility},
+    errors::AppError,
+    state::AppState,
+};
 
 type ApiError = (StatusCode, String);
+
+/// Les routes /auth répondent en texte brut : conversion depuis `AppError`.
+fn plain(e: AppError) -> ApiError {
+    match e {
+        AppError::BadRequest(m) => (StatusCode::BAD_REQUEST, m),
+        AppError::Unauthorized(m) => (StatusCode::UNAUTHORIZED, m),
+        AppError::PaymentRequired(m) => (StatusCode::PAYMENT_REQUIRED, m),
+        AppError::Forbidden(m) => (StatusCode::FORBIDDEN, m),
+        AppError::NotFound(m) => (StatusCode::NOT_FOUND, m),
+        AppError::Conflict(m) => (StatusCode::CONFLICT, m),
+        AppError::Internal(m) => internal(m),
+    }
+}
 
 fn internal<E: std::fmt::Display>(e: E) -> ApiError {
     tracing::error!("{e}");
@@ -31,6 +49,12 @@ pub struct RegisterRequest {
     pub username: String,
     pub email: String,
     pub password: String,
+    /// Date de naissance, `AAAA-MM-JJ` : 18 ans minimum.
+    #[serde(default)]
+    pub birth_date: Option<String>,
+    /// Acceptation explicite de la version courante des CGU.
+    #[serde(default)]
+    pub accept_terms: bool,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -46,8 +70,9 @@ pub struct RegisterResponse {
     request_body = RegisterRequest,
     responses(
         (status = 201, description = "Compte créé, mail de validation envoyé", body = RegisterResponse),
-        (status = 400, description = "Données invalides", body = String, content_type = "text/plain"),
-        (status = 409, description = "Email déjà utilisé", body = String, content_type = "text/plain"),
+        (status = 400, description = "Données invalides, date de naissance absente ou invalide, CGU non acceptées"),
+        (status = 403, description = "Moins de 18 ans : compte non créé"),
+        (status = 409, description = "Email déjà utilisé"),
     )
 )]
 pub async fn register(
@@ -63,6 +88,16 @@ pub async fn register(
             "Pseudo requis, email valide et mot de passe de 8 caractères minimum".into(),
         ));
     }
+    if !req.accept_terms {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "Accepte les conditions générales d'utilisation pour t'inscrire".into(),
+        ));
+    }
+    let mut conn = state.pool.acquire().await.map_err(internal)?;
+    let today = eligibility::today(&mut conn).await.map_err(plain)?;
+    drop(conn);
+    let birth = eligibility::check_birth_date(req.birth_date.as_deref(), today).map_err(plain)?;
 
     // Argon2 est volontairement lent : on le sort du thread async
     let password = req.password;
@@ -75,11 +110,14 @@ pub async fn register(
     let mut tx = state.pool.begin().await.map_err(internal)?;
 
     let user_id: Uuid = sqlx::query_scalar(
-        "INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id",
+        "INSERT INTO users (username, email, password_hash, birth_date, age_verified_at)
+         VALUES ($1, $2, $3, $4::date, now())
+         RETURNING id",
     )
     .bind(&username)
     .bind(&email)
     .bind(&password_hash)
+    .bind(birth.to_iso())
     .fetch_one(&mut *tx)
     .await
     .map_err(|e| {
@@ -111,6 +149,11 @@ pub async fn register(
     .execute(&mut *tx)
     .await
     .map_err(internal)?;
+
+    // Échec d'enregistrement de l'acceptation : rien n'est créé, l'utilisateur réessaie.
+    eligibility::accept_terms(&mut tx, user_id)
+        .await
+        .map_err(internal)?;
 
     tx.commit().await.map_err(internal)?;
 
@@ -279,6 +322,9 @@ pub struct MeResponse {
     pub email: Option<String>,
     /// Solde en crédits.
     pub balance: i64,
+    /// Âge et CGU : le compte n'est actif que si les deux sont validés.
+    #[sqlx(skip)]
+    pub eligibility: Option<Eligibility>,
 }
 
 #[utoipa::path(
@@ -311,7 +357,15 @@ pub async fn me(
     .map_err(internal)?;
 
     match user {
-        Some(user) => Ok(Json(user)),
+        Some(mut user) => {
+            let mut conn = state.pool.acquire().await.map_err(internal)?;
+            user.eligibility = Some(
+                eligibility::status(&mut conn, user_id)
+                    .await
+                    .map_err(internal)?,
+            );
+            Ok(Json(user))
+        }
         None => {
             // Compte supprimé ou suspendu depuis la connexion : on coupe la session.
             session.flush().await.map_err(internal)?;
@@ -500,4 +554,64 @@ pub async fn reset_password(
     });
 
     Ok("Mot de passe modifié, tu peux te connecter")
+}
+
+// ---------- Activation du compte (âge et CGU) ----------
+
+#[derive(Deserialize, ToSchema)]
+pub struct CompleteAccountRequest {
+    /// Date de naissance `AAAA-MM-JJ`, si elle n'a pas encore été déclarée.
+    #[serde(default)]
+    pub birth_date: Option<String>,
+    /// Acceptation de la version courante des CGU.
+    #[serde(default)]
+    pub accept_terms: bool,
+}
+
+#[utoipa::path(
+    post,
+    path = "/auth/complete",
+    tag = "auth",
+    request_body = CompleteAccountRequest,
+    responses(
+        (status = 200, description = "État d'activation après enregistrement", body = Eligibility),
+        (status = 400, description = "Date absente ou invalide, CGU non acceptées"),
+        (status = 401, description = "Non connecté"),
+        (status = 403, description = "Moins de 18 ans : le compte reste inactif"),
+    )
+)]
+pub async fn complete_account(
+    State(state): State<AppState>,
+    AuthUser(user_id): AuthUser,
+    Json(req): Json<CompleteAccountRequest>,
+) -> Result<Json<Eligibility>, ApiError> {
+    eligibility::complete(
+        &state.pool,
+        user_id,
+        req.birth_date.as_deref(),
+        req.accept_terms,
+    )
+    .await
+    .map(Json)
+    .map_err(plain)
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct TermsResponse {
+    /// Version courante des CGU.
+    pub version: String,
+}
+
+#[utoipa::path(
+    get,
+    path = "/terms",
+    tag = "auth",
+    responses((status = 200, description = "Version courante des CGU", body = TermsResponse))
+)]
+pub async fn terms(State(state): State<AppState>) -> Result<Json<TermsResponse>, ApiError> {
+    let mut conn = state.pool.acquire().await.map_err(internal)?;
+    let version = eligibility::current_terms_version(&mut conn)
+        .await
+        .map_err(internal)?;
+    Ok(Json(TermsResponse { version }))
 }

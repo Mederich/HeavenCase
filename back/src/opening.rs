@@ -9,6 +9,7 @@ use uuid::Uuid;
 
 use crate::{
     catalog::{self, LootEntry},
+    eligibility,
     errors::AppError,
     fair, seeds,
 };
@@ -59,6 +60,7 @@ pub async fn open_case(
     if banned {
         return Err(AppError::Forbidden("Compte suspendu".into()));
     }
+    eligibility::ensure(&mut tx, user_id).await?;
     if balance < case.price {
         return Err(AppError::PaymentRequired(format!(
             "Solde insuffisant : il te manque {} crédits",
@@ -302,6 +304,35 @@ mod tests {
         let user = create_user(&pool, 1_000).await;
         sqlx::query("UPDATE users SET banned_at = now() WHERE id = $1")
             .bind(user)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(matches!(
+            open_case(&pool, user, "heaven").await,
+            Err(AppError::Forbidden(_))
+        ));
+        assert_eq!(balance(&pool, user).await, 1_000);
+    }
+
+    #[sqlx::test]
+    async fn compte_non_active_ne_peut_pas_ouvrir(pool: PgPool) {
+        let user = create_user(&pool, 1_000).await;
+        sqlx::query("UPDATE users SET age_verified_at = NULL WHERE id = $1")
+            .bind(user)
+            .execute(&pool)
+            .await
+            .unwrap();
+        assert!(matches!(
+            open_case(&pool, user, "heaven").await,
+            Err(AppError::Forbidden(_))
+        ));
+
+        sqlx::query("UPDATE users SET age_verified_at = now() WHERE id = $1")
+            .bind(user)
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO terms_versions (version, published_at) VALUES ('v-suivante', now() + interval '1 day')")
             .execute(&pool)
             .await
             .unwrap();

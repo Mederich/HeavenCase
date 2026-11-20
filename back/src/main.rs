@@ -1,5 +1,6 @@
 mod auth_user;
 mod catalog;
+mod eligibility;
 mod errors;
 mod fair;
 mod inventory;

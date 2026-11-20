@@ -1,17 +1,32 @@
 import { createContext } from 'react'
 
+/** Contrôles d'activation du compte (âge et CGU). */
+export interface Eligibility {
+  /** Date de naissance déclarée, AAAA-MM-JJ. */
+  birth_date: string | null
+  /** 18 ans ou plus déclarés. */
+  age_verified: boolean
+  /** Version courante des CGU acceptée. */
+  terms_accepted: boolean
+  terms_version: string
+}
+
 export interface CurrentUser {
   id: string
   username: string
   email: string | null
   /** Solde en crédits. */
   balance: number
+  eligibility: Eligibility | null
 }
 
 export interface RegisterInput {
   username: string
   email: string
   password: string
+  /** AAAA-MM-JJ */
+  birth_date: string
+  accept_terms: boolean
 }
 
 export interface AuthContextValue {
