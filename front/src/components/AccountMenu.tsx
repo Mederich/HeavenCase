@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { ChevronDownIcon, LayoutGridIcon, LogOutIcon, PackageIcon, ReceiptTextIcon } from 'lucide-react'
+import { ChevronDownIcon, LayoutGridIcon, LogOutIcon, PackageIcon, ReceiptTextIcon, UserIcon } from 'lucide-react'
 import type { CurrentUser } from '@/auth/context'
 import { useAuth } from '@/auth/useAuth'
 import {
@@ -58,6 +58,12 @@ export function AccountMenu({ user }: { user: CurrentUser }) {
             <Link to="/cases">
               <LayoutGridIcon />
               Caisses
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/profile?tab=account">
+              <UserIcon />
+              Mon profil
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>

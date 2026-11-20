@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate, useLocation, useSearchParams } from 'react-router'
 import { useAuth } from '@/auth/useAuth'
+import { AccountPanel } from '@/components/profile/AccountPanel'
 import { InventoryPanel } from '@/components/profile/InventoryPanel'
 import { TransactionsPanel } from '@/components/profile/TransactionsPanel'
 import { UserAvatar } from '@/components/UserAvatar'
@@ -9,7 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toastError } from '@/lib/api'
 import { listInventory, type InventoryEntry, type SaleResult } from '@/lib/inventory'
 
-type Tab = 'inventory' | 'history'
+type Tab = 'inventory' | 'history' | 'account'
+
+const tabs: Tab[] = ['inventory', 'history', 'account']
 
 const number = new Intl.NumberFormat('fr-FR')
 
@@ -17,7 +20,8 @@ export function ProfilePage() {
   const { user, setBalance } = useAuth()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const tab: Tab = searchParams.get('tab') === 'history' ? 'history' : 'inventory'
+  const requested = searchParams.get('tab') as Tab | null
+  const tab: Tab = requested && tabs.includes(requested) ? requested : 'inventory'
 
   const [items, setItems] = useState<InventoryEntry[] | null>(null)
   const [failed, setFailed] = useState(false)
@@ -64,7 +68,7 @@ export function ProfilePage() {
   const inventoryValue = owned.reduce((sum, i) => sum + i.value, 0)
 
   const selectTab = (value: string) => {
-    setSearchParams(value === 'history' ? { tab: 'history' } : {}, { replace: true })
+    setSearchParams(value === 'inventory' ? {} : { tab: value }, { replace: true })
   }
 
   return (
@@ -100,12 +104,18 @@ export function ProfilePage() {
           <TabsTrigger value="history" className="flex-none px-0 text-base">
             Transactions
           </TabsTrigger>
+          <TabsTrigger value="account" className="flex-none px-0 text-base">
+            Compte
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="inventory">
           <InventoryPanel items={items} failed={failed} onSold={onSold} />
         </TabsContent>
         <TabsContent value="history">
           <TransactionsPanel key={salesCount} />
+        </TabsContent>
+        <TabsContent value="account">
+          <AccountPanel />
         </TabsContent>
       </Tabs>
 

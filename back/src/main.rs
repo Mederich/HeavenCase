@@ -1,3 +1,4 @@
+mod account;
 mod auth_user;
 mod catalog;
 mod eligibility;

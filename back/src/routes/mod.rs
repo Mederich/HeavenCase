@@ -1,3 +1,4 @@
+mod account;
 mod auth;
 mod cases;
 mod fair;
@@ -37,6 +38,8 @@ use utoipa_swagger_ui::SwaggerUi;
         auth::complete_account,
         auth::terms,
         users::get_user,
+        account::get,
+        account::update,
         cases::list,
         cases::detail,
         cases::open,
@@ -53,6 +56,7 @@ use utoipa_swagger_ui::SwaggerUi;
         (name = "health", description = "État du service"),
         (name = "auth", description = "Inscription et connexion"),
         (name = "users", description = "Profils des joueurs"),
+        (name = "account", description = "Profil privé du joueur connecté"),
         (name = "cases", description = "Catalogue de caisses"),
         (name = "fair", description = "Preuve d'équité (provably fair)"),
         (name = "inventory", description = "Inventaire du joueur"),
@@ -82,6 +86,7 @@ pub fn router() -> Router<AppState> {
         .route("/health", get(health))
         .route("/health/db", get(db_health))
         .nest("/users", users::router())
+        .route("/account", get(account::get).patch(account::update))
         .route("/auth/register", post(auth::register))
         .route("/auth/verify", get(auth::verify_email))
         .route("/auth/login", post(auth::login))
