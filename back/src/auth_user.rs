@@ -31,7 +31,7 @@ impl<S: Send + Sync> FromRequestParts<S> for AuthUser {
 }
 
 /// Vérifie que le joueur connecté possède le rôle administrateur.
-pub struct AdminUser(pub Uuid);
+pub struct AdminUser;
 
 impl<S: Send + Sync> FromRequestParts<S> for AdminUser
 where
@@ -39,26 +39,25 @@ where
 {
     type Rejection = AppError;
 
-    async fn from_request_parts(
-        parts: &mut Parts,
-        state: &S,
-    ) -> Result<Self, Self::Rejection> {
-        let AuthUser(user_id) =
-            AuthUser::from_request_parts(parts, state).await?;
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let AuthUser(user_id) = AuthUser::from_request_parts(parts, state).await?;
 
         let app_state = crate::state::AppState::from_ref(state);
 
-        let role: Option<String> = sqlx::query_scalar(
-            "SELECT role::text FROM users WHERE id = $1 AND banned_at IS NULL"
-        )
-        .bind(user_id)
-        .fetch_optional(&app_state.pool)
-        .await?;
+        let role: Option<String> =
+            sqlx::query_scalar("SELECT role::text FROM users WHERE id = $1 AND banned_at IS NULL")
+                .bind(user_id)
+                .fetch_optional(&app_state.pool)
+                .await?;
 
         match role.as_deref() {
-            Some("admin") => Ok(AdminUser(user_id)),
-            Some(_) => Err(AppError::Forbidden("Accès réservé aux administrateurs".into())),
-            None => Err(AppError::Unauthorized("Compte introuvable ou suspendu".into())),
+            Some("admin") => Ok(AdminUser),
+            Some(_) => Err(AppError::Forbidden(
+                "Accès réservé aux administrateurs".into(),
+            )),
+            None => Err(AppError::Unauthorized(
+                "Compte introuvable ou suspendu".into(),
+            )),
         }
     }
 }

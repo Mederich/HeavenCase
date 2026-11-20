@@ -1,6 +1,6 @@
 use axum::{
     Json,
-    extract::{Query, State, Path},
+    extract::{Path, Query, State},
 };
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
@@ -32,7 +32,7 @@ pub struct ItemQuery {
     pub grade: Option<String>,
 }
 
-#[derive(Serialize, ToSchema)]
+#[derive(Serialize, ToSchema, sqlx::FromRow)]
 pub struct Item {
     pub id: Uuid,
     pub name: String,
@@ -73,38 +73,37 @@ pub async fn list(
     let per_page = q.per_page.unwrap_or(20).clamp(1, 100);
     let offset = (page - 1) * per_page;
 
-    if let Some(grade) = &q.grade {
-        if !GRADES.contains(&grade.as_str()) {
-            return Err(AppError::BadRequest("Grade invalide".into()));
-        }
+    if let Some(grade) = &q.grade
+        && !GRADES.contains(&grade.as_str())
+    {
+        return Err(AppError::BadRequest("Grade invalide".into()));
     }
 
     let search = q.search.unwrap_or_default();
-    let items = sqlx::query_as!(
-        Item,
+    let items = sqlx::query_as::<_, Item>(
         r#"SELECT id, name, image_url, grade, exterior, stattrak,
-                  value, rarity::text AS "rarity!"
+                  value, rarity::text AS rarity
            FROM items
            WHERE name ILIKE '%' || $1 || '%'
              AND ($2::text IS NULL OR grade = $2)
            ORDER BY name
            LIMIT $3 OFFSET $4"#,
-        search,
-        q.grade,
-        per_page,
-        offset
     )
+    .bind(&search)
+    .bind(&q.grade)
+    .bind(per_page)
+    .bind(offset)
     .fetch_all(&state.pool)
     .await?;
 
-    let total = sqlx::query_scalar!(
-        r#"SELECT COUNT(*) AS "count!: i64"
+    let total: i64 = sqlx::query_scalar(
+        r#"SELECT COUNT(*)
            FROM items
            WHERE name ILIKE '%' || $1 || '%'
              AND ($2::text IS NULL OR grade = $2)"#,
-        search,
-        q.grade
     )
+    .bind(&search)
+    .bind(&q.grade)
     .fetch_one(&state.pool)
     .await?;
 
@@ -134,11 +133,17 @@ fn validate(input: &ItemInput) -> Result<(), AppError> {
     if !GRADES.contains(&input.grade.as_str()) {
         return Err(AppError::BadRequest("Grade invalide".into()));
     }
-    if input.exterior.as_ref().is_some_and(|e| !EXTERIORS.contains(&e.as_str())) {
+    if input
+        .exterior
+        .as_ref()
+        .is_some_and(|e| !EXTERIORS.contains(&e.as_str()))
+    {
         return Err(AppError::BadRequest("Usure invalide".into()));
     }
     if input.value < 0 {
-        return Err(AppError::BadRequest("La valeur doit être positive ou nulle".into()));
+        return Err(AppError::BadRequest(
+            "La valeur doit être positive ou nulle".into(),
+        ));
     }
     if !["common", "rare", "epic", "legendary", "mythic"].contains(&input.rarity.as_str()) {
         return Err(AppError::BadRequest("Rareté invalide".into()));
@@ -166,20 +171,19 @@ pub async fn create(
 ) -> Result<(axum::http::StatusCode, Json<Item>), AppError> {
     validate(&input)?;
 
-    let item = sqlx::query_as!(
-        Item,
+    let item = sqlx::query_as::<_, Item>(
         r#"INSERT INTO items (name, image_url, grade, exterior, stattrak, value, rarity)
            VALUES ($1, $2, $3, $4, $5, $6, $7::text::item_rarity)
            RETURNING id, name, image_url, grade, exterior, stattrak,
-                     value, rarity::text AS "rarity!""#,
-        input.name.trim(),
-        input.image_url,
-        input.grade,
-        input.exterior,
-        input.stattrak,
-        input.value,
-        input.rarity
+                     value, rarity::text AS rarity"#,
     )
+    .bind(input.name.trim())
+    .bind(&input.image_url)
+    .bind(&input.grade)
+    .bind(&input.exterior)
+    .bind(input.stattrak)
+    .bind(input.value)
+    .bind(&input.rarity)
     .fetch_one(&state.pool)
     .await?;
 
@@ -209,23 +213,22 @@ pub async fn update(
 ) -> Result<Json<Item>, AppError> {
     validate(&input)?;
 
-    let item = sqlx::query_as!(
-        Item,
+    let item = sqlx::query_as::<_, Item>(
         r#"UPDATE items
            SET name = $1, image_url = $2, grade = $3, exterior = $4,
                stattrak = $5, value = $6, rarity = $7::text::item_rarity
            WHERE id = $8
            RETURNING id, name, image_url, grade, exterior, stattrak,
-                     value, rarity::text AS "rarity!""#,
-        input.name.trim(),
-        input.image_url,
-        input.grade,
-        input.exterior,
-        input.stattrak,
-        input.value,
-        input.rarity.as_str(),
-        id
+                     value, rarity::text AS rarity"#,
     )
+    .bind(input.name.trim())
+    .bind(&input.image_url)
+    .bind(&input.grade)
+    .bind(&input.exterior)
+    .bind(input.stattrak)
+    .bind(input.value)
+    .bind(&input.rarity)
+    .bind(id)
     .fetch_optional(&state.pool)
     .await?
     .ok_or_else(|| AppError::NotFound("Objet introuvable".into()))?;
