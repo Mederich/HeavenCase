@@ -8,7 +8,7 @@ use utoipa::IntoParams;
 use crate::{
     auth_user::AuthUser,
     catalog::{self, CaseDetail, CaseSummary, PriceRange},
-    errors::AppError,
+    errors::{AppError, ErrorBody},
     opening::{self, OpeningResult},
     state::AppState,
 };
