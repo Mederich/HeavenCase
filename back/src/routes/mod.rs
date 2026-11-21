@@ -1,4 +1,5 @@
 mod account;
+mod admin;
 mod auth;
 mod cases;
 mod fair;
@@ -19,55 +20,59 @@ use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(OpenApi)]
 #[openapi(
-    info(
-        title = "HeavenCases API",
-        description = "API du site d'ouverture de caisses CS2. Les routes marquées d'un cadenas demandent le cookie de session `id` posé par `POST /auth/login`. Les erreurs de `/auth` et `/users` sont en texte brut, les autres en JSON (`ErrorBody`)."
-    ),
-    servers((url = "/", description = "Back en direct"), (url = "/api", description = "Via le proxy du front")),
-    modifiers(&SessionCookie),
-    components(schemas(crate::errors::ErrorBody)),
-    paths(
-        health,
-        db_health,
-        auth::register,
-        auth::verify_email,
-        auth::login,
-        auth::me,
-        auth::logout,
-        auth::forgot_password,
-        auth::reset_password,
-        auth::complete_account,
-        auth::terms,
-        users::get_user,
-        account::get,
-        account::update,
-        cases::list,
-        cases::detail,
-        cases::open,
-        fair::get_seeds,
-        fair::set_client_seed,
-        fair::rotate,
-        fair::verify,
-        openings::history,
-        inventory::list,
-        inventory::sell,
-        transactions::list,
-        payments::packs,
-        payments::checkout,
-        payments::get,
-        payments::webhook,
-    ),
-    tags(
-        (name = "health", description = "État du service"),
-        (name = "auth", description = "Inscription et connexion"),
-        (name = "users", description = "Profils des joueurs"),
-        (name = "account", description = "Profil privé du joueur connecté"),
-        (name = "cases", description = "Catalogue de caisses"),
-        (name = "fair", description = "Preuve d'équité (provably fair)"),
-        (name = "inventory", description = "Inventaire du joueur"),
-        (name = "wallet", description = "Solde, dépôts et historique des crédits")
-    )
-)]
+        info(
+            title = "HeavenCases API",
+            description = "API du site d'ouverture de caisses CS2. Les routes marquées d'un cadenas demandent le cookie de session `id` posé par `POST /auth/login`. Les erreurs de `/auth` et `/users` sont en texte brut, les autres en JSON (`ErrorBody`)."
+        ),
+        servers((url = "/", description = "Back en direct"), (url = "/api", description = "Via le proxy du front")),
+        modifiers(&SessionCookie),
+        components(schemas(crate::errors::ErrorBody)),
+        paths(
+            health,
+            db_health,
+            auth::register,
+            auth::verify_email,
+            auth::login,
+            auth::me,
+            auth::logout,
+            auth::forgot_password,
+            auth::reset_password,
+            auth::complete_account,
+            auth::terms,
+            users::get_user,
+            account::get,
+            account::update,
+            cases::list,
+            cases::detail,
+            cases::open,
+            fair::get_seeds,
+            fair::set_client_seed,
+            fair::rotate,
+            fair::verify,
+            openings::history,
+            inventory::list,
+            inventory::sell,
+            transactions::list,
+            payments::packs,
+            payments::checkout,
+            payments::get,
+            payments::webhook,
+            admin::list,
+            admin::create,
+            admin::update,
+        ),
+        tags(
+            (name = "health", description = "État du service"),
+            (name = "auth", description = "Inscription et connexion"),
+            (name = "users", description = "Profils des joueurs"),
+            (name = "account", description = "Profil privé du joueur connecté"),
+            (name = "cases", description = "Catalogue de caisses"),
+            (name = "fair", description = "Preuve d'équité (provably fair)"),
+            (name = "inventory", description = "Inventaire du joueur"),
+            (name = "wallet", description = "Solde, dépôts et historique des crédits"),
+            (name = "admin", description = "Gestion des objets CS2")
+        )
+    )]
 pub struct ApiDoc;
 
 /// Déclare l'authentification par cookie de session (tower-sessions).
@@ -116,31 +121,33 @@ pub fn router() -> Router<AppState> {
         .route("/payments/checkout", post(payments::checkout))
         .route("/payments/webhook", post(payments::webhook))
         .route("/payments/{id}", get(payments::get))
+        .route("/admin/items", get(admin::list).post(admin::create))
+        .route("/admin/items/{id}", put(admin::update))
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi()))
 }
 
 #[utoipa::path(
-    get,
-    path = "/health",
-    tag = "health",
-    responses((status = 200, description = "Service démarré", body = String, content_type = "text/plain"))
-)]
+        get,
+        path = "/health",
+        tag = "health",
+        responses((status = 200, description = "Service démarré", body = String, content_type= "text/plain"))
+    )]
 async fn health() -> &'static str {
     "ok"
 }
 
 #[utoipa::path(
-    get,
-    path = "/health/db",
-    tag = "health",
-    responses((status = 200, description = "Tables présentes en base", body = Vec<String>))
-)]
+        get,
+        path = "/health/db",
+        tag = "health",
+        responses((status = 200, description = "Tables présentes en base", body = Vec<String>))
+    )]
 async fn db_health(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<String>>, (StatusCode, String)> {
     let tables: Vec<String> = sqlx::query_scalar(
         "SELECT table_name::text FROM information_schema.tables
-         WHERE table_schema = 'public' ORDER BY table_name",
+            WHERE table_schema = 'public' ORDER BY table_name",
     )
     .fetch_all(&state.pool)
     .await
@@ -154,7 +161,7 @@ mod tests {
     use super::ApiDoc;
     use utoipa::OpenApi;
 
-    /// Vérifie la spec et l'écrit dans `$OPENAPI_OUT` si la variable est définie (export CI).
+    /// Vérifie la spec et l'écrit dans `$OPENAPI_OUT` si la variable est définie (exportCI).
     #[test]
     fn openapi_spec() {
         let spec = ApiDoc::openapi();
